@@ -1,0 +1,614 @@
+const STORAGE_KEY = "macros-flex-state-v2";
+const LEGACY_STORAGE_KEY = "macros-flex-state-v1";
+
+// ── Supabase config ──────────────────────────────────────────────────────────
+// Rellena estas dos variables con los valores de tu proyecto Supabase
+// (Project Settings → API)
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _supabase = null;
+let _saveTimer = null;
+let aiAvailability = {
+  enabled: false,
+  provider: null,
+  providerKey: null,
+  model: null,
+  reason: "Comprobando disponibilidad...",
+  setupHint: "",
+};
+
+function getSupabase() {
+  if (_supabase) return _supabase;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return _supabase;
+}
+
+function getCodigo() {
+  let code = localStorage.getItem("macros-flex-codigo");
+  if (!code) {
+    code = prompt(
+      "Elige un código de acceso personal.\nÚsalo en todos tus dispositivos para sincronizar tus datos.\n\n(Si cancelas, se genera uno aleatorio para este dispositivo.)"
+    );
+    if (!code || !code.trim()) code = Math.random().toString(36).slice(2, 12);
+    localStorage.setItem("macros-flex-codigo", code.trim());
+  }
+  return code;
+}
+
+function scheduleSave() {
+  const sb = getSupabase();
+  if (!sb) return;
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    const code = getCodigo();
+    await sb.from("sessions").upsert({ id: code, state, updated_at: new Date().toISOString() });
+  }, 800);
+}
+
+const foodLibrary = {
+  "Arroz cocido": { protein: 2.7, carbs: 28, fat: 0.3, kcal: 130 },
+  "Pechuga de pollo": { protein: 31, carbs: 0, fat: 3.6, kcal: 165 },
+  "Avena": { protein: 13, carbs: 60, fat: 7, kcal: 389 },
+  "Plátano": { protein: 1.1, carbs: 23, fat: 0.3, kcal: 89 },
+  "Claras de huevo": { protein: 11, carbs: 0.7, fat: 0.2, kcal: 52 },
+  "Huevo entero": { protein: 13, carbs: 1.1, fat: 11, kcal: 155 },
+  "Salmón": { protein: 20, carbs: 0, fat: 13, kcal: 208 },
+  "Patata cocida": { protein: 2, carbs: 17, fat: 0.1, kcal: 77 },
+  "Yogur griego 0%": { protein: 10, carbs: 3.6, fat: 0.4, kcal: 59 },
+  "Pan integral": { protein: 12, carbs: 43, fat: 4.2, kcal: 252 },
+  "Aceite de oliva": { protein: 0, carbs: 0, fat: 100, kcal: 900 },
+  "Almendras": { protein: 21, carbs: 22, fat: 49, kcal: 579 },
+  "Pavo": { protein: 24, carbs: 0, fat: 1.5, kcal: 111 },
+  "Ternera magra": { protein: 26, carbs: 0, fat: 10, kcal: 190 },
+  "Tofu firme": { protein: 13, carbs: 1.9, fat: 8, kcal: 144 },
+  "Pasta cocida": { protein: 5.8, carbs: 31, fat: 1.1, kcal: 157 },
+  "Boniato": { protein: 1.6, carbs: 20.1, fat: 0.1, kcal: 86 },
+  "Atún al natural": { protein: 24, carbs: 0, fat: 1, kcal: 109 },
+  "Queso fresco batido 0%": { protein: 8, carbs: 4, fat: 0.2, kcal: 46 },
+  "Tortilla de maíz": { protein: 6, carbs: 44, fat: 2.8, kcal: 218 },
+  "Garbanzos cocidos": { protein: 8.2, carbs: 27.4, fat: 2.6, kcal: 164 },
+  "Lentejas cocidas": { protein: 9, carbs: 20, fat: 0.4, kcal: 116 },
+  "Aguacate": { protein: 2, carbs: 9, fat: 15, kcal: 160 },
+  "Manzana": { protein: 0.3, carbs: 14, fat: 0.2, kcal: 52 },
+  "Frutos rojos": { protein: 0.8, carbs: 12, fat: 0.3, kcal: 57 },
+};
+
+const defaultState = {
+  meals: [
+    createMeal("Desayuno", [
+      createFood("Avena", 80),
+      createFood("Claras de huevo", 200),
+      createFood("Plátano", 120),
+    ]),
+    createMeal("Comida", [
+      createFood("Pechuga de pollo", 180),
+      createFood("Arroz cocido", 250),
+      createFood("Aceite de oliva", 10),
+    ]),
+    createMeal("Cena", [
+      createFood("Salmón", 180),
+      createFood("Patata cocida", 300),
+    ]),
+  ],
+  templates: [],
+  aiSuggestions: {},
+};
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function createFood(name = "", grams = 100, overrides = {}) {
+  const preset = foodLibrary[name] || { protein: 0, carbs: 0, fat: 0, kcal: 0 };
+  return {
+    id: uid(),
+    name,
+    grams,
+    protein: overrides.protein ?? preset.protein,
+    carbs: overrides.carbs ?? preset.carbs,
+    fat: overrides.fat ?? preset.fat,
+    kcal: overrides.kcal ?? preset.kcal,
+  };
+}
+
+function createMeal(name = "Nueva comida", foods = [createFood()]) {
+  return { id: uid(), name, foods };
+}
+
+function cloneMeal(meal) {
+  return {
+    id: uid(),
+    name: `${meal.name} copia`,
+    foods: meal.foods.map((food) => ({ ...food, id: uid() })),
+  };
+}
+
+function sanitizeState(parsed) {
+  const meals = Array.isArray(parsed?.meals) ? parsed.meals : structuredClone(defaultState.meals);
+  const templates = Array.isArray(parsed?.templates) ? parsed.templates : [];
+  const aiSuggestions = parsed?.aiSuggestions && typeof parsed.aiSuggestions === "object" ? parsed.aiSuggestions : {};
+  return { meals, templates, aiSuggestions };
+}
+
+async function loadState() {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const code = getCodigo();
+      const { data } = await sb.from("sessions").select("state").eq("id", code).single();
+      if (data?.state) return sanitizeState(data.state);
+    } catch {}
+  }
+
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return structuredClone(defaultState);
+    return sanitizeState(JSON.parse(raw));
+  } catch {
+    return structuredClone(defaultState);
+  }
+}
+
+let state = structuredClone(defaultState);
+
+const mealsContainer = document.getElementById("mealsContainer");
+const dailySummary = document.getElementById("dailySummary");
+const mealTemplate = document.getElementById("mealTemplate");
+const foodRowTemplate = document.getElementById("foodRowTemplate");
+const foodOptions = document.getElementById("foodOptions");
+const templateSelect = document.getElementById("templateSelect");
+const aiStatusText = document.getElementById("aiStatusText");
+const aiStatusBadge = document.getElementById("aiStatusBadge");
+const aiProviderMeta = document.getElementById("aiProviderMeta");
+const aiSetupHint = document.getElementById("aiSetupHint");
+
+function persistStateOnly() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.removeItem(LEGACY_STORAGE_KEY);
+  scheduleSave();
+}
+
+function persistAndRender() {
+  persistStateOnly();
+  render();
+}
+
+function calculateFoodTotals(food) {
+  const factor = Number(food.grams || 0) / 100;
+  return {
+    protein: round((food.protein || 0) * factor),
+    carbs: round((food.carbs || 0) * factor),
+    fat: round((food.fat || 0) * factor),
+    kcal: round((food.kcal || 0) * factor),
+  };
+}
+
+function calculateMealTotals(meal) {
+  return meal.foods.reduce(
+    (acc, food) => {
+      const totals = calculateFoodTotals(food);
+      acc.protein += totals.protein;
+      acc.carbs += totals.carbs;
+      acc.fat += totals.fat;
+      acc.kcal += totals.kcal;
+      acc.items += 1;
+      return acc;
+    },
+    { protein: 0, carbs: 0, fat: 0, kcal: 0, items: 0 }
+  );
+}
+
+function calculateDayTotals() {
+  return state.meals.reduce(
+    (acc, meal) => {
+      const totals = calculateMealTotals(meal);
+      acc.protein += totals.protein;
+      acc.carbs += totals.carbs;
+      acc.fat += totals.fat;
+      acc.kcal += totals.kcal;
+      acc.meals += 1;
+      acc.foods += totals.items;
+      return acc;
+    },
+    { protein: 0, carbs: 0, fat: 0, kcal: 0, meals: 0, foods: 0 }
+  );
+}
+
+function round(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
+}
+
+function setAiAvailability(next) {
+  aiAvailability = { ...aiAvailability, ...next };
+  aiStatusText.textContent = aiAvailability.reason;
+  aiStatusBadge.textContent = aiAvailability.enabled ? "IA activa" : "IA opcional";
+  aiStatusBadge.classList.toggle("offline", !aiAvailability.enabled);
+  aiProviderMeta.textContent = aiAvailability.provider
+    ? `Proveedor: ${aiAvailability.provider}`
+    : "Proveedor: no configurado en este despliegue";
+  aiSetupHint.textContent = aiAvailability.enabled
+    ? "La clave vive solo en backend. Si cambias de proveedor o modelo, el resto de la app sigue igual."
+    : aiAvailability.setupHint || "Puedes usar la app sin IA hasta que añadas una clave al servidor.";
+}
+
+async function loadAiAvailability() {
+  try {
+    const response = await fetch("/api/ai-status");
+    if (!response.ok) throw new Error("status unavailable");
+    const data = await response.json();
+    setAiAvailability({
+      enabled: Boolean(data.enabled),
+      provider: data.provider || null,
+      providerKey: data.providerKey || null,
+      model: data.model || null,
+      setupHint: data.setupHint || "",
+      reason: data.enabled
+        ? "Puedes pedir alternativas similares por comida. La app intentará mantener macros y kcal cercanas."
+        : data.reason || "La IA no está configurada en este despliegue. El resto de la app funciona igual.",
+    });
+  } catch {
+    setAiAvailability({
+      enabled: false,
+      provider: null,
+      providerKey: null,
+      model: null,
+      setupHint: "Si publicas solo los archivos estáticos sin server.js, la IA quedará desactivada automáticamente.",
+      reason: "No hay endpoint de IA disponible. La app sigue funcionando sin esta función.",
+    });
+  }
+  render();
+}
+
+function renderFoodOptions() {
+  foodOptions.innerHTML = Object.keys(foodLibrary)
+    .sort((a, b) => a.localeCompare(b, "es"))
+    .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+    .join("");
+}
+
+function renderTemplateOptions() {
+  templateSelect.innerHTML = `<option value="">Selecciona una plantilla</option>${state.templates
+    .map((template) => `<option value="${template.id}">${escapeHtml(template.name)}</option>`)
+    .join("")}`;
+}
+
+function renderSummary() {
+  const totals = calculateDayTotals();
+  const cards = [
+    ["Proteína", `${round(totals.protein)} g`],
+    ["Hidratos", `${round(totals.carbs)} g`],
+    ["Grasas", `${round(totals.fat)} g`],
+    ["Kcal", `${round(totals.kcal)}`],
+    ["Comidas", `${totals.meals}`],
+    ["Alimentos", `${totals.foods}`],
+  ];
+  dailySummary.innerHTML = cards
+    .map(([label, value]) => `<article class="summary-card"><span>${label}</span><strong>${value}</strong></article>`)
+    .join("");
+}
+
+function renderMeals() {
+  mealsContainer.innerHTML = "";
+  state.meals.forEach((meal) => {
+    const fragment = mealTemplate.content.cloneNode(true);
+    const titleInput = fragment.querySelector(".meal-title");
+    const meta = fragment.querySelector(".meal-meta");
+    const tbody = fragment.querySelector(".foods-body");
+    const summary = fragment.querySelector(".meal-summary");
+    const aiBox = fragment.querySelector(".meal-ai-box");
+    const aiStatus = fragment.querySelector(".meal-ai-status");
+    const aiResults = fragment.querySelector(".meal-ai-results");
+    const suggestButton = fragment.querySelector(".suggest-meal-btn");
+
+    titleInput.value = meal.name;
+    titleInput.addEventListener("input", (event) => {
+      meal.name = event.target.value || "Sin nombre";
+      persistAndRender();
+    });
+
+    fragment.querySelector(".add-food-btn").addEventListener("click", () => {
+      meal.foods.push(createFood());
+      persistAndRender();
+    });
+
+    fragment.querySelector(".duplicate-meal-btn").addEventListener("click", () => {
+      state.meals.push(cloneMeal(meal));
+      persistAndRender();
+    });
+
+    fragment.querySelector(".remove-meal-btn").addEventListener("click", () => {
+      state.meals = state.meals.filter((item) => item.id !== meal.id);
+      delete state.aiSuggestions[meal.id];
+      if (state.meals.length === 0) state.meals.push(createMeal("Comida 1"));
+      persistAndRender();
+    });
+
+    suggestButton.disabled = !aiAvailability.enabled;
+    suggestButton.title = aiAvailability.enabled ? "Pide 3 comidas parecidas en macros" : "La IA no está configurada ahora mismo";
+    suggestButton.addEventListener("click", async () => {
+      await requestMealSuggestions(meal.id, suggestButton, aiStatus, aiResults, aiBox);
+    });
+
+    meal.foods.forEach((food) => {
+      const rowFragment = foodRowTemplate.content.cloneNode(true);
+      const row = rowFragment.querySelector("tr");
+      const bindings = {
+        name: row.querySelector(".food-name"),
+        grams: row.querySelector(".grams"),
+        protein: row.querySelector(".protein100"),
+        carbs: row.querySelector(".carbs100"),
+        fat: row.querySelector(".fat100"),
+        kcal: row.querySelector(".kcal100"),
+        total: row.querySelector(".food-total"),
+      };
+
+      bindings.name.value = food.name;
+      bindings.grams.value = food.grams;
+      bindings.protein.value = food.protein;
+      bindings.carbs.value = food.carbs;
+      bindings.fat.value = food.fat;
+      bindings.kcal.value = food.kcal;
+
+      bindings.name.addEventListener("change", (event) => {
+        food.name = event.target.value;
+        const preset = foodLibrary[food.name];
+        if (preset) {
+          food.protein = preset.protein;
+          food.carbs = preset.carbs;
+          food.fat = preset.fat;
+          food.kcal = preset.kcal;
+        }
+        clearSuggestionsForMeal(meal.id);
+        persistAndRender();
+      });
+
+      [
+        [bindings.grams, "grams"],
+        [bindings.protein, "protein"],
+        [bindings.carbs, "carbs"],
+        [bindings.fat, "fat"],
+        [bindings.kcal, "kcal"],
+      ].forEach(([input, key]) => {
+        input.addEventListener("input", (event) => {
+          food[key] = Number(event.target.value) || 0;
+          clearSuggestionsForMeal(meal.id);
+          updateFoodTotal(bindings.total, food);
+          updateMealUi(meal, meta, summary);
+          renderSummary();
+          persistStateOnly();
+        });
+      });
+
+      row.querySelector(".remove-food-btn").addEventListener("click", () => {
+        meal.foods = meal.foods.filter((item) => item.id !== food.id);
+        clearSuggestionsForMeal(meal.id);
+        if (meal.foods.length === 0) meal.foods.push(createFood());
+        persistAndRender();
+      });
+
+      updateFoodTotal(bindings.total, food);
+      tbody.appendChild(rowFragment);
+    });
+
+    updateMealUi(meal, meta, summary);
+    renderMealSuggestions(meal.id, aiBox, aiStatus, aiResults);
+    mealsContainer.appendChild(fragment);
+  });
+}
+
+function clearSuggestionsForMeal(mealId) {
+  if (!state.aiSuggestions[mealId]) return;
+  delete state.aiSuggestions[mealId];
+}
+
+function updateFoodTotal(target, food) {
+  const totals = calculateFoodTotals(food);
+  target.textContent = `P ${totals.protein}g\nHC ${totals.carbs}g\nG ${totals.fat}g\n${totals.kcal} kcal`;
+}
+
+function updateMealUi(meal, meta, summary) {
+  const totals = calculateMealTotals(meal);
+  meta.textContent = `${totals.items} alimentos · ${round(totals.kcal)} kcal`;
+  summary.innerHTML = [
+    `Proteína ${round(totals.protein)} g`,
+    `Hidratos ${round(totals.carbs)} g`,
+    `Grasas ${round(totals.fat)} g`,
+    `Kcal ${round(totals.kcal)}`,
+  ]
+    .map((item) => `<span class="meal-pill">${item}</span>`)
+    .join("");
+}
+
+function renderMealSuggestions(mealId, aiBox, aiStatus, aiResults) {
+  const entry = state.aiSuggestions[mealId];
+  if (!entry) {
+    aiBox.classList.add("hidden");
+    aiStatus.textContent = "";
+    aiResults.innerHTML = "";
+    return;
+  }
+
+  aiBox.classList.remove("hidden");
+  aiStatus.textContent = entry.note || "";
+  aiResults.innerHTML = (entry.suggestions || [])
+    .map(
+      (suggestion) => `
+        <article class="ai-suggestion-card">
+          <h3>${escapeHtml(suggestion.name || "Alternativa")}</h3>
+          <p>${escapeHtml(suggestion.reason || "")}</p>
+          <ul class="ai-suggestion-list">
+            ${(suggestion.foods || [])
+              .map((food) => `<li>${escapeHtml(food.name || "Alimento")}${food.grams ? `, ${round(food.grams)} g` : ""}</li>`)
+              .join("")}
+          </ul>
+          <div class="ai-meta-row">
+            <span class="meal-pill">P ${round(suggestion.macros?.protein || 0)} g</span>
+            <span class="meal-pill">HC ${round(suggestion.macros?.carbs || 0)} g</span>
+            <span class="meal-pill">G ${round(suggestion.macros?.fat || 0)} g</span>
+            <span class="meal-pill">${round(suggestion.macros?.kcal || 0)} kcal</span>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+}
+
+async function requestMealSuggestions(mealId, button, statusNode, resultsNode, boxNode) {
+  const meal = state.meals.find((item) => item.id === mealId);
+  if (!meal || !aiAvailability.enabled) return;
+
+  statusNode.textContent = "Consultando IA...";
+  resultsNode.innerHTML = "";
+  boxNode.classList.remove("hidden");
+  button.disabled = true;
+
+  try {
+    const response = await fetch("/api/suggest-meal-alternatives", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ meal, library: foodLibrary }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || "No se pudo generar la sugerencia");
+
+    state.aiSuggestions[mealId] = {
+      generatedAt: new Date().toISOString(),
+      note: payload.note || "Sugerencias orientativas. Ajusta gramos o alimentos si quieres más precisión.",
+      suggestions: Array.isArray(payload.suggestions) ? payload.suggestions : [],
+    };
+    persistAndRender();
+  } catch (error) {
+    statusNode.textContent = error.message || "No se pudieron cargar sugerencias";
+  } finally {
+    button.disabled = !aiAvailability.enabled;
+  }
+}
+
+function buildDaySummaryText() {
+  const totals = calculateDayTotals();
+  const lines = [
+    `Macros Flex · ${new Date().toLocaleDateString("es-ES")}`,
+    `Total: ${round(totals.kcal)} kcal | P ${round(totals.protein)} g | HC ${round(totals.carbs)} g | G ${round(totals.fat)} g`,
+    "",
+  ];
+
+  state.meals.forEach((meal) => {
+    const mealTotals = calculateMealTotals(meal);
+    lines.push(`${meal.name}: ${round(mealTotals.kcal)} kcal | P ${round(mealTotals.protein)} g | HC ${round(mealTotals.carbs)} g | G ${round(mealTotals.fat)} g`);
+    meal.foods.forEach((food) => {
+      lines.push(`- ${food.name || "Alimento"}, ${round(food.grams)} g`);
+    });
+    lines.push("");
+  });
+
+  return lines.join("\n");
+}
+
+function exportState() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `macros-flex-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importState(file) {
+  const text = await file.text();
+  const parsed = sanitizeState(JSON.parse(text));
+  state = parsed;
+  persistAndRender();
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function render() {
+  renderFoodOptions();
+  renderTemplateOptions();
+  renderSummary();
+  renderMeals();
+}
+
+document.getElementById("addMealBtn").addEventListener("click", () => {
+  state.meals.push(createMeal(`Comida ${state.meals.length + 1}`));
+  persistAndRender();
+});
+
+document.getElementById("resetDayBtn").addEventListener("click", () => {
+  if (!confirm("¿Reiniciar todas las comidas del día?")) return;
+  state = structuredClone(defaultState);
+  persistAndRender();
+});
+
+document.getElementById("addTemplateBtn").addEventListener("click", () => {
+  const mealNames = state.meals.map((meal, index) => `${index + 1}. ${meal.name}`).join("\n");
+  const choice = prompt(`¿Qué comida quieres guardar como plantilla?\n${mealNames}\n\nEscribe el número.`);
+  const index = Number(choice) - 1;
+  if (!Number.isInteger(index) || !state.meals[index]) return;
+  const name = prompt("Nombre para la plantilla", state.meals[index].name);
+  if (!name) return;
+  state.templates.push({
+    id: uid(),
+    name,
+    meal: {
+      ...state.meals[index],
+      id: uid(),
+      name,
+      foods: state.meals[index].foods.map((food) => ({ ...food, id: uid() })),
+    },
+  });
+  persistAndRender();
+});
+
+document.getElementById("applyTemplateBtn").addEventListener("click", () => {
+  const selected = state.templates.find((template) => template.id === templateSelect.value);
+  if (!selected) return;
+  state.meals.push(cloneMeal(selected.meal));
+  persistAndRender();
+});
+
+document.getElementById("copyDaySummaryBtn").addEventListener("click", async () => {
+  const summary = buildDaySummaryText();
+  try {
+    await navigator.clipboard.writeText(summary);
+    alert("Resumen copiado al portapapeles.");
+  } catch {
+    prompt("Copia este resumen:", summary);
+  }
+});
+
+document.getElementById("exportDataBtn").addEventListener("click", () => {
+  exportState();
+});
+
+document.getElementById("importDataInput").addEventListener("change", async (event) => {
+  const [file] = event.target.files || [];
+  if (!file) return;
+  try {
+    await importState(file);
+    alert("Datos importados correctamente.");
+  } catch {
+    alert("No se pudo importar el JSON. Revisa el archivo.");
+  } finally {
+    event.target.value = "";
+  }
+});
+
+(async () => {
+  state = await loadState();
+  persistStateOnly();
+  await loadAiAvailability();
+  render();
+})();

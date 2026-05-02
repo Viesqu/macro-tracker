@@ -1,0 +1,11 @@
+{
+  "name": "Macros Flex",
+  "short_name": "Macros Flex",
+  "lang": "es",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f6fb",
+  "theme_color": "#2563eb",
+  "description": "Registro simple de comidas y macros diarios desde cualquier dispositivo.",
+  "icons": []
+}

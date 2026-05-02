@@ -1,0 +1,13 @@
+{
+  "name": "macros-flex",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Macro tracker listo para desplegar como servicio Node con IA opcional vía OpenRouter u OpenAI.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}

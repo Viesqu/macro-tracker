@@ -1,12 +1,8 @@
-const STORAGE_KEY = "macros-flex-state-v2";
-const LEGACY_STORAGE_KEY = "macros-flex-state-v1";
+const STORAGE_KEY = "macros-flex-state-v3";
+const LEGACY_STORAGE_KEY = "macros-flex-state-v2";
 
-// ── Supabase config ──────────────────────────────────────────────────────────
-// Rellena estas dos variables con los valores de tu proyecto Supabase
-// (Project Settings → API)
 const SUPABASE_URL = "";
 const SUPABASE_ANON_KEY = "";
-// ─────────────────────────────────────────────────────────────────────────────
 
 let _supabase = null;
 let _saveTimer = null;
@@ -78,20 +74,9 @@ const foodLibrary = {
 
 const defaultState = {
   meals: [
-    createMeal("Desayuno", [
-      createFood("Avena", 80),
-      createFood("Claras de huevo", 200),
-      createFood("Plátano", 120),
-    ]),
-    createMeal("Comida", [
-      createFood("Pechuga de pollo", 180),
-      createFood("Arroz cocido", 250),
-      createFood("Aceite de oliva", 10),
-    ]),
-    createMeal("Cena", [
-      createFood("Salmón", 180),
-      createFood("Patata cocida", 300),
-    ]),
+    createMeal("Comida 1", [createFood("Avena", 80), createFood("Claras de huevo", 200), createFood("Plátano", 120)]),
+    createMeal("Comida 2", [createFood("Pechuga de pollo", 180), createFood("Arroz cocido", 250), createFood("Aceite de oliva", 10)]),
+    createMeal("Comida 3", [createFood("Salmón", 180), createFood("Patata cocida", 300)]),
   ],
   templates: [],
   aiSuggestions: {},
@@ -118,6 +103,19 @@ function createMeal(name = "Nueva comida", foods = [createFood()]) {
   return { id: uid(), name, foods };
 }
 
+function getDefaultMealName(index) {
+  return `Comida ${index + 1}`;
+}
+
+function normalizeMealNames(meals) {
+  const legacyDefaults = ["Desayuno", "Comida", "Cena"];
+  const allLegacy = meals.length === legacyDefaults.length && meals.every((meal, index) => (meal?.name || "").trim() === legacyDefaults[index]);
+  return meals.map((meal, index) => ({
+    ...meal,
+    name: allLegacy && legacyDefaults.includes((meal?.name || "").trim()) ? getDefaultMealName(index) : (meal?.name || "").trim() || getDefaultMealName(index),
+  }));
+}
+
 function cloneMeal(meal) {
   return {
     id: uid(),
@@ -127,7 +125,24 @@ function cloneMeal(meal) {
 }
 
 function sanitizeState(parsed) {
-  const meals = Array.isArray(parsed?.meals) ? parsed.meals : structuredClone(defaultState.meals);
+  const baseMeals = Array.isArray(parsed?.meals) ? parsed.meals : structuredClone(defaultState.meals);
+  const meals = normalizeMealNames(
+    baseMeals.map((meal, index) => ({
+      id: meal?.id || uid(),
+      name: meal?.name || getDefaultMealName(index),
+      foods: Array.isArray(meal?.foods) && meal.foods.length
+        ? meal.foods.map((food) => ({
+            id: food?.id || uid(),
+            name: food?.name || "",
+            grams: Number(food?.grams || 0),
+            protein: Number(food?.protein || 0),
+            carbs: Number(food?.carbs || 0),
+            fat: Number(food?.fat || 0),
+            kcal: Number(food?.kcal || 0),
+          }))
+        : [createFood()],
+    }))
+  );
   const templates = Array.isArray(parsed?.templates) ? parsed.templates : [];
   const aiSuggestions = parsed?.aiSuggestions && typeof parsed.aiSuggestions === "object" ? parsed.aiSuggestions : {};
   return { meals, templates, aiSuggestions };
@@ -164,6 +179,8 @@ const aiStatusText = document.getElementById("aiStatusText");
 const aiStatusBadge = document.getElementById("aiStatusBadge");
 const aiProviderMeta = document.getElementById("aiProviderMeta");
 const aiSetupHint = document.getElementById("aiSetupHint");
+const heroHighlights = document.getElementById("heroHighlights");
+const aiPanelState = document.getElementById("aiPanelState");
 
 function persistStateOnly() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -174,6 +191,10 @@ function persistStateOnly() {
 function persistAndRender() {
   persistStateOnly();
   render();
+}
+
+function round(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
 }
 
 function calculateFoodTotals(food) {
@@ -217,22 +238,26 @@ function calculateDayTotals() {
   );
 }
 
-function round(value) {
-  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
-}
-
 function setAiAvailability(next) {
   aiAvailability = { ...aiAvailability, ...next };
   aiStatusText.textContent = aiAvailability.reason;
   aiStatusBadge.textContent = aiAvailability.enabled ? "IA activa" : "IA opcional";
   aiStatusBadge.classList.toggle("offline", !aiAvailability.enabled);
-  aiProviderMeta.textContent = aiAvailability.provider
-    ? `Proveedor: ${aiAvailability.provider}`
-    : "Proveedor: no configurado en este despliegue";
+  aiProviderMeta.textContent = aiAvailability.provider ? `Proveedor: ${aiAvailability.provider}` : "Proveedor: no configurado en este despliegue";
   aiSetupHint.textContent = aiAvailability.enabled
-    ? "La clave vive solo en backend. Si cambias de proveedor o modelo, el resto de la app sigue igual."
+    ? "La clave vive solo en backend. Si el proveedor se satura, la app mostrará mensajes más humanos y puede devolver una alternativa de respaldo."
     : aiAvailability.setupHint || "Puedes usar la app sin IA hasta que añadas una clave al servidor.";
-}
+  aiPanelState.innerHTML = `
+    <div class="ai-state-strip ${aiAvailability.enabled ? "online" : "offline"}">
+      <span class="status-chip ${aiAvailability.enabled ? "" : "offline"}">${aiAvailability.enabled ? "Lista para sugerir" : "Modo manual"}</span>
+      <p>${escapeHtml(
+        aiAvailability.enabled
+          ? "Pide alternativas por comida y, si falla el proveedor, verás un plan B útil en vez de un error seco."
+          : "La parte inteligente está desactivada aquí, pero el tracking y las plantillas siguen funcionando igual."
+      )}</p>
+    </div>
+  `;
+} 
 
 async function loadAiAvailability() {
   try {
@@ -246,7 +271,7 @@ async function loadAiAvailability() {
       model: data.model || null,
       setupHint: data.setupHint || "",
       reason: data.enabled
-        ? "Puedes pedir alternativas similares por comida. La app intentará mantener macros y kcal cercanas."
+        ? "Puedes pedir alternativas por comida. Si la IA falla, intentaremos darte una respuesta útil en vez de un error crudo."
         : data.reason || "La IA no está configurada en este despliegue. El resto de la app funciona igual.",
     });
   } catch {
@@ -278,34 +303,61 @@ function renderTemplateOptions() {
 function renderSummary() {
   const totals = calculateDayTotals();
   const cards = [
-    ["Proteína", `${round(totals.protein)} g`],
-    ["Hidratos", `${round(totals.carbs)} g`],
-    ["Grasas", `${round(totals.fat)} g`],
-    ["Kcal", `${round(totals.kcal)}`],
-    ["Comidas", `${totals.meals}`],
-    ["Alimentos", `${totals.foods}`],
+    ["💪", "Proteína", `${round(totals.protein)} g`, `${totals.meals} comidas activas`, "protein"],
+    ["🍚", "Hidratos", `${round(totals.carbs)} g`, `${totals.foods} alimentos en total`, "carbs"],
+    ["🥑", "Grasas", `${round(totals.fat)} g`, "Balance del día", "fat"],
+    ["🔥", "Kcal", `${round(totals.kcal)}`, "Suma actual", "kcal"],
   ];
   dailySummary.innerHTML = cards
-    .map(([label, value]) => `<article class="summary-card"><span>${label}</span><strong>${value}</strong></article>`)
+    .map(
+      ([icon, label, value, subtext, tone]) => `
+        <article class="summary-card ${tone}">
+          <span class="summary-label">${icon} ${label}</span>
+          <strong>${value}</strong>
+          <div class="summary-subtext">${subtext}</div>
+        </article>
+      `
+    )
+    .join("");
+
+  heroHighlights.innerHTML = [
+    [`${totals.meals}`, "bloques editables"],
+    [`${totals.foods}`, "alimentos hoy"],
+    [aiAvailability.enabled ? "IA lista" : "IA opcional", aiAvailability.enabled ? "alternativas activas" : "sin bloquear la app"],
+  ]
+    .map(
+      ([value, label]) => `
+        <div class="hero-highlight-card">
+          <strong>${escapeHtml(value)}</strong>
+          <span>${escapeHtml(label)}</span>
+        </div>
+      `
+    )
     .join("");
 }
 
 function renderMeals() {
   mealsContainer.innerHTML = "";
-  state.meals.forEach((meal) => {
+  state.meals.forEach((meal, index) => {
     const fragment = mealTemplate.content.cloneNode(true);
     const titleInput = fragment.querySelector(".meal-title");
+    const mealIndexBadge = fragment.querySelector(".meal-index-badge");
     const meta = fragment.querySelector(".meal-meta");
     const tbody = fragment.querySelector(".foods-body");
     const summary = fragment.querySelector(".meal-summary");
+    const spotlight = fragment.querySelector(".meal-spotlight");
+    const kcalValue = fragment.querySelector(".meal-kcal-value");
+    const macroBars = fragment.querySelector(".meal-macro-bars");
     const aiBox = fragment.querySelector(".meal-ai-box");
     const aiStatus = fragment.querySelector(".meal-ai-status");
+    const aiStage = fragment.querySelector(".meal-ai-stage");
     const aiResults = fragment.querySelector(".meal-ai-results");
     const suggestButton = fragment.querySelector(".suggest-meal-btn");
 
+    mealIndexBadge.textContent = getDefaultMealName(index);
     titleInput.value = meal.name;
     titleInput.addEventListener("input", (event) => {
-      meal.name = event.target.value || "Sin nombre";
+      meal.name = event.target.value || getDefaultMealName(index);
       persistAndRender();
     });
 
@@ -327,7 +379,7 @@ function renderMeals() {
     });
 
     suggestButton.disabled = !aiAvailability.enabled;
-    suggestButton.title = aiAvailability.enabled ? "Pide 3 comidas parecidas en macros" : "La IA no está configurada ahora mismo";
+    suggestButton.title = aiAvailability.enabled ? "Pide alternativas visuales y parecidas en macros" : "La IA no está configurada ahora mismo";
     suggestButton.addEventListener("click", async () => {
       await requestMealSuggestions(meal.id, suggestButton, aiStatus, aiResults, aiBox);
     });
@@ -376,7 +428,7 @@ function renderMeals() {
           food[key] = Number(event.target.value) || 0;
           clearSuggestionsForMeal(meal.id);
           updateFoodTotal(bindings.total, food);
-          updateMealUi(meal, meta, summary);
+          updateMealUi(meal, meta, summary, spotlight, kcalValue, macroBars);
           renderSummary();
           persistStateOnly();
         });
@@ -393,8 +445,8 @@ function renderMeals() {
       tbody.appendChild(rowFragment);
     });
 
-    updateMealUi(meal, meta, summary);
-    renderMealSuggestions(meal.id, aiBox, aiStatus, aiResults);
+    updateMealUi(meal, meta, summary, spotlight, kcalValue, macroBars);
+    renderMealSuggestions(meal.id, aiBox, aiStatus, aiStage, aiResults);
     mealsContainer.appendChild(fragment);
   });
 }
@@ -409,8 +461,9 @@ function updateFoodTotal(target, food) {
   target.textContent = `P ${totals.protein}g\nHC ${totals.carbs}g\nG ${totals.fat}g\n${totals.kcal} kcal`;
 }
 
-function updateMealUi(meal, meta, summary) {
+function updateMealUi(meal, meta, summary, spotlight, kcalValue, macroBars) {
   const totals = calculateMealTotals(meal);
+  const totalMacros = Math.max(totals.protein + totals.carbs + totals.fat, 1);
   meta.textContent = `${totals.items} alimentos · ${round(totals.kcal)} kcal`;
   summary.innerHTML = [
     `Proteína ${round(totals.protein)} g`,
@@ -420,24 +473,61 @@ function updateMealUi(meal, meta, summary) {
   ]
     .map((item) => `<span class="meal-pill">${item}</span>`)
     .join("");
+
+  if (spotlight && kcalValue && macroBars) {
+    kcalValue.textContent = round(totals.kcal);
+    spotlight.classList.toggle("compact", totals.items < 2);
+    macroBars.innerHTML = [
+      ["Proteína", totals.protein, "protein"],
+      ["Hidratos", totals.carbs, "carbs"],
+      ["Grasas", totals.fat, "fat"],
+    ]
+      .map(
+        ([label, value, tone]) => `
+          <div class="macro-bar ${tone}">
+            <div class="macro-bar-top">
+              <span>${label}</span>
+              <strong>${round(value)} g</strong>
+            </div>
+            <div class="macro-bar-track"><span style="width:${Math.max(10, Math.min(100, (value / totalMacros) * 100))}%"></span></div>
+          </div>
+        `
+      )
+      .join("");
+  }
 }
 
-function renderMealSuggestions(mealId, aiBox, aiStatus, aiResults) {
+function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
   const entry = state.aiSuggestions[mealId];
   if (!entry) {
     aiBox.classList.add("hidden");
     aiStatus.textContent = "";
+    aiStage.innerHTML = "";
     aiResults.innerHTML = "";
     return;
   }
 
   aiBox.classList.remove("hidden");
   aiStatus.textContent = entry.note || "";
-  aiResults.innerHTML = (entry.suggestions || [])
+  aiStage.innerHTML = buildAiStage(entry);
+
+  const banner = entry.banner
+    ? `
+      <div class="ai-info-banner ${escapeHtml(entry.banner.tone || "info")}">
+        <strong>${escapeHtml(entry.banner.title || "")}</strong>
+        ${entry.banner.body ? `<p>${escapeHtml(entry.banner.body)}</p>` : ""}
+      </div>
+    `
+    : "";
+
+  const cards = (entry.suggestions || [])
     .map(
       (suggestion) => `
         <article class="ai-suggestion-card">
-          <h3>${escapeHtml(suggestion.name || "Alternativa")}</h3>
+          <div class="ai-suggestion-topline">
+            <span class="ai-suggestion-badge">${escapeHtml(suggestion.fitLabel || "Ajuste aproximado")}</span>
+            <h3>${escapeHtml(suggestion.name || "Alternativa")}</h3>
+          </div>
           <p>${escapeHtml(suggestion.reason || "")}</p>
           <ul class="ai-suggestion-list">
             ${(suggestion.foods || [])
@@ -454,14 +544,42 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiResults) {
       `
     )
     .join("");
+
+  aiResults.innerHTML = `${banner}${cards || '<article class="ai-suggestion-card"><h3>Sin propuestas</h3><p>No hemos podido construir una alternativa útil todavía. Prueba a añadir más detalle a la comida o vuelve a intentarlo más tarde.</p></article>'}`;
+}
+
+function buildAiStage(entry) {
+  const tone = entry.banner?.tone || "info";
+  const stamp = entry.generatedAt ? new Date(entry.generatedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" }) : "ahora";
+  return `
+    <div class="ai-stage-card ${escapeHtml(tone)}">
+      <span class="ai-stage-dot"></span>
+      <div>
+        <strong>${escapeHtml(entry.banner?.title || "IA lista")}</strong>
+        <p>${escapeHtml(entry.banner?.body || "Generado para esta comida.")}</p>
+      </div>
+      <span class="ai-stage-time">${escapeHtml(stamp)}</span>
+    </div>
+  `;
 }
 
 async function requestMealSuggestions(mealId, button, statusNode, resultsNode, boxNode) {
   const meal = state.meals.find((item) => item.id === mealId);
   if (!meal || !aiAvailability.enabled) return;
 
-  statusNode.textContent = "Consultando IA...";
-  resultsNode.innerHTML = "";
+  state.aiSuggestions[mealId] = {
+    generatedAt: new Date().toISOString(),
+    note: "Estamos preparando opciones similares para esta comida.",
+    banner: {
+      tone: "info",
+      title: "Pensando alternativas",
+      body: "Buscando una versión realista con macros parecidas.",
+    },
+    suggestions: [],
+  };
+  render();
+  statusNode.textContent = "Buscando opciones parecidas...";
+  resultsNode.innerHTML = '<article class="ai-suggestion-card skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></article>';
   boxNode.classList.remove("hidden");
   button.disabled = true;
 
@@ -473,16 +591,31 @@ async function requestMealSuggestions(mealId, button, statusNode, resultsNode, b
     });
 
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || "No se pudo generar la sugerencia");
+    if (!response.ok) throw payload;
 
     state.aiSuggestions[mealId] = {
       generatedAt: new Date().toISOString(),
       note: payload.note || "Sugerencias orientativas. Ajusta gramos o alimentos si quieres más precisión.",
-      suggestions: Array.isArray(payload.suggestions) ? payload.suggestions : [],
+      banner: payload.banner || { tone: payload.fallbackUsed ? "warning" : "success", title: "Sugerencias listas" },
+      suggestions: Array.isArray(payload.suggestions)
+        ? payload.suggestions.map((suggestion) => ({ ...suggestion, fitLabel: payload.fallbackUsed ? "Plan B" : "IA" }))
+        : [],
     };
     persistAndRender();
   } catch (error) {
-    statusNode.textContent = error.message || "No se pudieron cargar sugerencias";
+    state.aiSuggestions[mealId] = {
+      generatedAt: new Date().toISOString(),
+      note: error?.humanMessage || "No he podido pedir la sugerencia al proveedor ahora mismo.",
+      banner: {
+        tone: error?.fallbackUsed ? "warning" : "info",
+        title: error?.fallbackUsed ? "Mostrando plan B" : "Ahora mismo no está disponible",
+        body: error?.providerMessage || error?.error || "Prueba otra vez en un momento.",
+      },
+      suggestions: Array.isArray(error?.fallbackSuggestions)
+        ? error.fallbackSuggestions.map((suggestion) => ({ ...suggestion, fitLabel: error?.fallbackUsed ? "Plan B" : "Manual" }))
+        : [],
+    };
+    persistAndRender();
   } finally {
     button.disabled = !aiAvailability.enabled;
   }
@@ -542,7 +675,7 @@ function render() {
 }
 
 document.getElementById("addMealBtn").addEventListener("click", () => {
-  state.meals.push(createMeal(`Comida ${state.meals.length + 1}`));
+  state.meals.push(createMeal(getDefaultMealName(state.meals.length)));
   persistAndRender();
 });
 

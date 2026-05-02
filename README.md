@@ -26,7 +26,7 @@ La función de IA está pensada para ser limpia y segura:
 
 ### Activar IA en local o en servidor
 
-Ahora la vía por defecto es **OpenRouter** con un modelo gratuito razonable.
+Ahora la vía por defecto es **OpenRouter** con varios modelos gratuitos razonables en cascada.
 
 Arranca la app así:
 
@@ -34,10 +34,16 @@ Arranca la app así:
 OPENROUTER_API_KEY=tu_clave npm run dev
 ```
 
-Opcionalmente puedes elegir modelo:
+Opcionalmente puedes fijar un solo modelo:
 
 ```bash
 OPENROUTER_API_KEY=tu_clave OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free npm run dev
+```
+
+O definir una cadena de fallback explícita:
+
+```bash
+OPENROUTER_API_KEY=tu_clave OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free npm run dev
 ```
 
 Tienes un ejemplo listo en `.env.example`.
@@ -46,7 +52,8 @@ Variables soportadas:
 
 - `AI_PROVIDER=openrouter` (por defecto)
 - `OPENROUTER_API_KEY`
-- `OPENROUTER_MODEL` u `AI_MODEL`
+- `OPENROUTER_MODELS` para fallback automático entre varios modelos
+- `OPENROUTER_MODEL` u `AI_MODEL` si quieres forzar uno solo
 - `OPENROUTER_SITE_URL` y `OPENROUTER_APP_NAME` para identificar el proyecto en OpenRouter
 
 Si prefieres seguir con OpenAI:
@@ -113,11 +120,11 @@ Pasos:
 Ya va preconfigurado con:
 
 - `AI_PROVIDER=openrouter`
-- `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free`
+- `OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free`
 - `npm start`
 - health check en `/health`
 
-Con eso la app queda publicada con IA activa por defecto usando OpenRouter + Llama 3.3 gratis.
+Con eso la app queda publicada con IA activa por defecto usando OpenRouter y varios modelos gratis en cascada.
 
 ### Alternativa muy simple, Railway
 
@@ -130,7 +137,7 @@ Pasos:
 3. En el servicio, define estas variables:
    - `AI_PROVIDER=openrouter`
    - `OPENROUTER_API_KEY=tu_clave`
-   - `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free`
+   - `OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free`
    - `OPENROUTER_SITE_URL=https://tu-dominio-railway.app`
    - `OPENROUTER_APP_NAME=Macros Flex`
 4. Deploy.
@@ -152,7 +159,8 @@ Por defecto:
 
 - `AI_PROVIDER=openrouter`
 - `OPENROUTER_API_KEY`
-- `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free`
+- `OPENROUTER_MODELS` para fallback automático
+- `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free` si quieres fijar uno
 - `OPENROUTER_SITE_URL`
 - `OPENROUTER_APP_NAME=Macros Flex`
 
@@ -167,6 +175,7 @@ Alternativa OpenAI:
 - `GET /health` debe devolver `ok: true`
 - al abrir la app, el bloque de IA debe indicar `IA activa`
 - al pulsar `✨ Sugerir alternativa` en una comida real, deben salir 3 propuestas
+- si un modelo gratis devuelve 429 o falla, el servidor debe probar otro automáticamente y, si todos fallan, mostrar un plan B local
 
 ## Base preparada para crecer
 

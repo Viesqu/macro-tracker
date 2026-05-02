@@ -10,8 +10,8 @@ services:
     envVars:
       - key: AI_PROVIDER
         value: openrouter
-      - key: OPENROUTER_MODEL
-        value: meta-llama/llama-3.3-70b-instruct:free
+      - key: OPENROUTER_MODELS
+        value: meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free
       - key: OPENROUTER_SITE_URL
         sync: false
       - key: OPENROUTER_APP_NAME

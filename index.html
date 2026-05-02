@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#2563eb" />
+    <meta name="theme-color" content="#4f46e5" />
     <meta
       name="description"
-      content="Macro tracker simple para registrar comidas, gramos y macros diarios desde cualquier dispositivo."
+      content="Macro tracker visual para registrar comidas, gramos y macros diarios desde cualquier dispositivo."
     />
     <title>Macros Flex</title>
     <link rel="manifest" href="./manifest.webmanifest" />
@@ -14,55 +14,81 @@
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Macros diarios flexibles</p>
+      <header class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">Macros diarios, sin fricción</p>
           <h1>Macros Flex</h1>
           <p class="subtitle">
-            Añade las comidas que quieras, mete alimentos y gramos, y ve el total del día al momento.
+            Una vista más premium para construir tu día comida a comida, ajustar gramos rápido y recibir alternativas visuales cuando quieres variar sin romper tus macros.
           </p>
+          <div class="hero-actions">
+            <button id="addMealBtn" class="primary">+ Añadir comida</button>
+            <button id="copyDaySummaryBtn" class="secondary">Copiar resumen</button>
+            <button id="resetDayBtn" class="ghost">Reiniciar día</button>
+          </div>
+          <div class="hero-highlights" id="heroHighlights"></div>
         </div>
-        <div class="topbar-actions">
-          <button id="addMealBtn" class="primary">+ Añadir comida</button>
-          <button id="addTemplateBtn" class="secondary">Guardar plantilla</button>
-          <button id="copyDaySummaryBtn" class="secondary">Copiar resumen</button>
-          <button id="resetDayBtn" class="ghost">Reiniciar día</button>
-        </div>
+
+        <aside class="hero-side">
+          <div class="hero-mini-card">
+            <span class="mini-label">Qué puedes hacer</span>
+            <ul class="mini-list">
+              <li>Nombres neutros como Comida 1, Comida 2 y Comida 3</li>
+              <li>Renombrar cada bloque a tu manera en cualquier momento</li>
+              <li>Pedir alternativas parecidas con IA y ver su estado más claro</li>
+            </ul>
+          </div>
+          <div class="hero-mini-card soft">
+            <span class="mini-label">Guardado</span>
+            <p class="mini-text">Tus cambios se guardan al momento. Si activas Supabase, también se sincronizan entre dispositivos.</p>
+          </div>
+        </aside>
       </header>
 
       <section class="summary-grid" id="dailySummary"></section>
 
-      <section class="panel controls-panel">
-        <div>
-          <h2>Biblioteca rápida</h2>
-          <p>Usa alimentos predefinidos o crea los tuyos editando los macros por 100 g.</p>
-          <p class="storage-note">Tus datos se guardan en este navegador. La IA es opcional y solo se activa si hay clave configurada en el servidor.</p>
-        </div>
-        <div class="inline-actions controls-stack">
-          <label>
-            Plantillas guardadas
-            <select id="templateSelect">
-              <option value="">Selecciona una plantilla</option>
-            </select>
-          </label>
-          <button id="applyTemplateBtn" class="secondary">Aplicar a una comida nueva</button>
-          <button id="exportDataBtn" class="ghost">Exportar JSON</button>
-          <label class="file-button ghost">
-            Importar JSON
-            <input id="importDataInput" type="file" accept="application/json" hidden />
-          </label>
-        </div>
-      </section>
+      <section class="workspace-grid">
+        <section class="panel controls-panel">
+          <div>
+            <p class="eyebrow">Atajos</p>
+            <h2>Plantillas y datos</h2>
+            <p>Recupera comidas frecuentes, exporta tu día o importa una copia sin tocar el resto de la app.</p>
+          </div>
+          <div class="controls-stack">
+            <label>
+              Plantillas guardadas
+              <select id="templateSelect">
+                <option value="">Selecciona una plantilla</option>
+              </select>
+            </label>
+            <div class="inline-actions">
+              <button id="addTemplateBtn" class="secondary">Guardar plantilla</button>
+              <button id="applyTemplateBtn" class="secondary">Aplicar plantilla</button>
+            </div>
+            <div class="inline-actions">
+              <button id="exportDataBtn" class="ghost">Exportar JSON</button>
+              <label class="file-button ghost">
+                Importar JSON
+                <input id="importDataInput" type="file" accept="application/json" hidden />
+              </label>
+            </div>
+          </div>
+        </section>
 
-      <section class="panel ai-panel" id="aiStatusPanel">
-        <div>
-          <p class="eyebrow">Alternativas con IA</p>
-          <h2>Sugerencias similares por comida</h2>
-          <p id="aiStatusText" class="ai-status-text">Comprobando disponibilidad…</p>
-          <p id="aiProviderMeta" class="ai-provider-meta">Proveedor: comprobando…</p>
-          <p id="aiSetupHint" class="ai-setup-hint">La app puede funcionar perfectamente aunque esta parte no esté activa.</p>
-        </div>
-        <div class="ai-panel-note" id="aiStatusBadge">IA</div>
+        <section class="panel ai-panel" id="aiStatusPanel">
+          <div>
+            <p class="eyebrow">Alternativas con IA</p>
+            <h2>Te propongo cambios realistas</h2>
+            <p id="aiStatusText" class="ai-status-text">Comprobando disponibilidad…</p>
+            <p id="aiProviderMeta" class="ai-provider-meta">Proveedor: comprobando…</p>
+            <p id="aiSetupHint" class="ai-setup-hint">La app puede funcionar perfectamente aunque esta parte no esté activa.</p>
+            <div class="ai-panel-state" id="aiPanelState"></div>
+          </div>
+          <div class="ai-panel-side">
+            <div class="ai-panel-note" id="aiStatusBadge">IA</div>
+            <p class="ai-side-note">Si la IA falla o está saturada, la app intentará darte una salida útil y entendible.</p>
+          </div>
+        </section>
       </section>
 
       <main>
@@ -73,13 +99,16 @@
     <template id="mealTemplate">
       <section class="panel meal-card">
         <div class="meal-header">
-          <div>
-            <input class="meal-title" type="text" placeholder="Nombre de la comida" />
+          <div class="meal-heading">
+            <div class="meal-title-row">
+              <input class="meal-title" type="text" placeholder="Comida 1" />
+              <span class="meal-index-badge"></span>
+            </div>
             <p class="meal-meta"></p>
           </div>
           <div class="meal-actions">
             <button class="secondary add-food-btn">+ Alimento</button>
-            <button class="ai-button suggest-meal-btn">✨ Sugerir alternativa</button>
+            <button class="ai-button suggest-meal-btn">✨ Ver alternativas</button>
             <button class="ghost duplicate-meal-btn">Duplicar</button>
             <button class="danger remove-meal-btn">Borrar</button>
           </div>
@@ -104,11 +133,22 @@
         </div>
 
         <div class="meal-summary"></div>
+        <div class="meal-spotlight">
+          <div class="meal-kcal-orb">
+            <span class="meal-kcal-value">0</span>
+            <span class="meal-kcal-label">kcal</span>
+          </div>
+          <div class="meal-macro-bars"></div>
+        </div>
         <div class="meal-ai-box hidden">
           <div class="meal-ai-header">
-            <strong>Alternativas sugeridas</strong>
-            <span class="meal-ai-status"></span>
+            <div>
+              <strong>Alternativas sugeridas</strong>
+              <p class="meal-ai-status"></p>
+            </div>
+            <span class="meal-ai-tag">IA</span>
           </div>
+          <div class="meal-ai-stage"></div>
           <div class="meal-ai-results"></div>
         </div>
       </section>
@@ -116,18 +156,18 @@
 
     <template id="foodRowTemplate">
       <tr>
-        <td>
+        <td data-label="Alimento">
           <div class="food-name-cell">
             <input class="food-name" list="foodOptions" type="text" placeholder="Ej. arroz cocido" />
           </div>
         </td>
-        <td><input class="grams" type="number" min="0" step="1" value="100" /></td>
-        <td><input class="protein100" type="number" min="0" step="0.1" value="0" /></td>
-        <td><input class="carbs100" type="number" min="0" step="0.1" value="0" /></td>
-        <td><input class="fat100" type="number" min="0" step="0.1" value="0" /></td>
-        <td><input class="kcal100" type="number" min="0" step="1" value="0" /></td>
-        <td class="food-total"></td>
-        <td><button class="ghost small remove-food-btn">✕</button></td>
+        <td data-label="Gramos"><input class="grams" type="number" min="0" step="1" value="100" /></td>
+        <td data-label="Proteína /100g"><input class="protein100" type="number" min="0" step="0.1" value="0" /></td>
+        <td data-label="Hidratos /100g"><input class="carbs100" type="number" min="0" step="0.1" value="0" /></td>
+        <td data-label="Grasas /100g"><input class="fat100" type="number" min="0" step="0.1" value="0" /></td>
+        <td data-label="Kcal /100g"><input class="kcal100" type="number" min="0" step="1" value="0" /></td>
+        <td class="food-total" data-label="Total"></td>
+        <td data-label="Acción"><button class="ghost small remove-food-btn">✕</button></td>
       </tr>
     </template>
 

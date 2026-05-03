@@ -10,10 +10,11 @@ const AI_PROVIDER = (process.env.AI_PROVIDER || process.env.LLM_PROVIDER || 'ope
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
 const DEFAULT_OPENROUTER_MODELS = [
+const DEFAULT_OPENROUTER_MODELS = [
+  'google/gemma-3-27b-it:free',
   'meta-llama/llama-3.3-70b-instruct:free',
   'deepseek/deepseek-chat-v3-0324:free',
   'qwen/qwen-2.5-72b-instruct:free',
-  'google/gemma-3-27b-it:free',
 ];
 
 const AI_CONFIG = resolveAiConfig();

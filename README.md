@@ -1,6 +1,18 @@
 # Macros Flex
 
-App web sencilla para registrar comidas dinámicas, ver macros diarios y, opcionalmente, pedir alternativas parecidas con IA.
+App web para registrar comidas dinámicas, ver macros diarios y, opcionalmente, pedir alternativas parecidas con IA.
+
+## Regla principal
+
+**Todos los alimentos se tratan siempre en crudo**, salvo productos que no requieren cocción y se consumen tal cual, por ejemplo:
+
+- yogur
+- pan
+- tortillas ya hechas
+- aceite
+- proteína whey
+
+La app ya deja esta regla clara en la UI, en el resumen copiable, en la base de alimentos y en las sugerencias IA / Plan B.
 
 ## Qué hace ahora
 
@@ -10,11 +22,34 @@ App web sencilla para registrar comidas dinámicas, ver macros diarios y, opcion
 - Ver proteínas, hidratos, grasas y kcal por alimento, por comida y total diario.
 - Duplicar comidas.
 - Guardar una comida como plantilla y reutilizarla luego.
-- Copiar un resumen del día para compartirlo rápido.
+- Copiar un resumen del día indicando que todo va en crudo.
 - Exportar e importar el estado en JSON.
 - Guardado automático en `localStorage` del navegador.
 - Sincronización opcional con Supabase si rellenas `SUPABASE_URL` y `SUPABASE_ANON_KEY` en `app.js`.
-- Sugerencias opcionales con IA para proponer comidas alternativas de macros similares.
+- Sugerencias opcionales con IA y fallback local coherente con pesos en crudo.
+
+## Base de alimentos
+
+Se ha limpiado la ambigüedad de varios alimentos que antes estaban en cocido.
+
+Ejemplos ajustados:
+
+- `Arroz cocido` → `Arroz`
+- `Patata cocida` → `Patata`
+- `Pasta cocida` → `Pasta seca`
+- `Garbanzos cocidos` → `Garbanzos secos`
+- `Lentejas cocidas` → `Lentejas secas`
+- `Atún al natural` → `Atún fresco`
+
+Además, la biblioteca ahora incluye más opciones útiles reales, por ejemplo:
+
+- arroz basmati, arroz jazmín, pasta seca
+- tortitas de arroz, tortilla de trigo
+- merluza, bacalao, gambas
+- tempeh, seitán, edamame
+- skyr, requesón, leche semidesnatada
+- alubias secas, nueces, crema de cacahuete, chía
+- proteína whey, chocolate negro 85%
 
 ## IA, cómo funciona
 
@@ -22,13 +57,13 @@ La función de IA está pensada para ser limpia y segura:
 
 - Si **no** hay clave configurada, la app **no se rompe**.
 - Verás la UI de IA marcada como opcional y el botón de sugerencias quedará desactivado.
-- Si hay clave, cada comida tiene un botón `✨ Sugerir alternativa` que pide 3 propuestas parecidas en macros y kcal.
+- Si hay clave, cada comida tiene un botón para pedir alternativas parecidas.
+- El prompt obliga a mantener la regla de pesos en crudo.
+- Si falla la IA externa, el servidor genera un **Plan B local** con alternativas razonables y también en crudo.
 
 ### Activar IA en local o en servidor
 
-Ahora la vía por defecto es **OpenRouter** con varios modelos gratuitos razonables en cascada.
-
-Arranca la app así:
+Ruta por defecto, OpenRouter:
 
 ```bash
 OPENROUTER_API_KEY=tu_clave npm run dev
@@ -46,17 +81,7 @@ O definir una cadena de fallback explícita:
 OPENROUTER_API_KEY=tu_clave OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free npm run dev
 ```
 
-Tienes un ejemplo listo en `.env.example`.
-
-Variables soportadas:
-
-- `AI_PROVIDER=openrouter` (por defecto)
-- `OPENROUTER_API_KEY`
-- `OPENROUTER_MODELS` para fallback automático entre varios modelos
-- `OPENROUTER_MODEL` u `AI_MODEL` si quieres forzar uno solo
-- `OPENROUTER_SITE_URL` y `OPENROUTER_APP_NAME` para identificar el proyecto en OpenRouter
-
-Si prefieres seguir con OpenAI:
+Si prefieres OpenAI:
 
 ```bash
 AI_PROVIDER=openai OPENAI_API_KEY=tu_clave OPENAI_MODEL=gpt-4.1-mini npm run dev
@@ -64,18 +89,7 @@ AI_PROVIDER=openai OPENAI_API_KEY=tu_clave OPENAI_MODEL=gpt-4.1-mini npm run dev
 
 La clave se usa solo en el servidor (`server.js`). No se expone en el navegador.
 
-### Limitaciones de la IA
-
-- Las sugerencias son orientativas, no una prescripción nutricional.
-- El modelo intenta mantenerse cerca de los macros, pero puede haber pequeñas desviaciones.
-- Conviene revisar gramos y alimentos antes de usar una propuesta tal cual.
-- Si despliegas la app como hosting estático puro sin `server.js`, la función de IA no estará disponible, pero el resto sí.
-
 ## Cómo arrancarla en local
-
-### Opción recomendada
-
-Desde esta carpeta:
 
 ```bash
 npm install
@@ -92,104 +106,20 @@ http://localhost:4321
 
 1. Arranca con `OPENROUTER_API_KEY` configurada, o con `AI_PROVIDER=openai` si prefieres OpenAI.
 2. Abre una comida con alimentos reales y cantidades.
-3. Pulsa `✨ Sugerir alternativa`.
-4. Deberían aparecer 3 opciones con:
+3. Pulsa `✨ Ver alternativas en crudo`.
+4. Deberían aparecer propuestas con:
    - nombre de la propuesta
    - breve motivo
-   - lista de alimentos y gramos
+   - lista de alimentos y gramos en crudo
    - macros y kcal aproximadas
 
-## Despliegue sencillo
+## Despliegue
 
-### Ruta más directa recomendada, Render con IA funcionando
-
-He dejado `render.yaml` preparado para que Render detecte el servicio casi solo.
-
-Pasos:
-
-1. Sube `macro-tracker` a un repo de GitHub.
-2. En Render, elige **New +** → **Blueprint**.
-3. Selecciona ese repo.
-4. Render leerá `render.yaml` y creará el servicio Node apuntando a `macro-tracker`.
-5. Antes de desplegar, añade solo este secret:
-   - `OPENROUTER_API_KEY=tu_clave`
-6. Opcional pero recomendable, pon también:
-   - `OPENROUTER_SITE_URL=https://tu-app.onrender.com`
-7. Pulsa deploy.
-
-Ya va preconfigurado con:
-
-- `AI_PROVIDER=openrouter`
-- `OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free`
-- `npm start`
-- health check en `/health`
-
-Con eso la app queda publicada con IA activa por defecto usando OpenRouter y varios modelos gratis en cascada.
-
-### Alternativa muy simple, Railway
-
-También he dejado `railway.json` preparado.
-
-Pasos:
-
-1. Sube `macro-tracker` a GitHub.
-2. En Railway, crea un proyecto desde ese repo.
-3. En el servicio, define estas variables:
-   - `AI_PROVIDER=openrouter`
-   - `OPENROUTER_API_KEY=tu_clave`
-   - `OPENROUTER_MODELS=meta-llama/llama-3.3-70b-instruct:free,deepseek/deepseek-chat-v3-0324:free,qwen/qwen-2.5-72b-instruct:free,google/gemma-3-27b-it:free`
-   - `OPENROUTER_SITE_URL=https://tu-dominio-railway.app`
-   - `OPENROUTER_APP_NAME=Macros Flex`
-4. Deploy.
-
-Railway arrancará con `npm start` y podrá comprobar salud en `/health`.
-
-### Opción estática, sin IA
-
-Si quieres la versión sin backend:
-
-1. Subir la carpeta `macro-tracker` a GitHub.
-2. Publicarla como sitio estático.
-3. Funcionarán macros, plantillas, exportación/importación y guardado local.
-4. La IA quedará desactivada automáticamente.
-
-### Variables de entorno útiles
-
-Por defecto:
-
-- `AI_PROVIDER=openrouter`
-- `OPENROUTER_API_KEY`
-- `OPENROUTER_MODELS` para fallback automático
-- `OPENROUTER_MODEL=meta-llama/llama-3.3-70b-instruct:free` si quieres fijar uno
-- `OPENROUTER_SITE_URL`
-- `OPENROUTER_APP_NAME=Macros Flex`
-
-Alternativa OpenAI:
-
-- `AI_PROVIDER=openai`
-- `OPENAI_API_KEY`
-- `OPENAI_MODEL=gpt-4.1-mini`
+Basta con un **redeploy simple** del servicio actual. No hay migraciones ni cambios de infraestructura obligatorios.
 
 ### Comprobación rápida tras publicar
 
 - `GET /health` debe devolver `ok: true`
-- al abrir la app, el bloque de IA debe indicar `IA activa`
-- al pulsar `✨ Sugerir alternativa` en una comida real, deben salir 3 propuestas
+- al abrir la app, debe verse clara la regla de `todo en crudo`
+- al pulsar `✨ Ver alternativas en crudo` en una comida real, deben salir propuestas
 - si un modelo gratis devuelve 429 o falla, el servidor debe probar otro automáticamente y, si todos fallan, mostrar un plan B local
-
-## Base preparada para crecer
-
-La estructura ya separa:
-
-- estado del día (`meals`)
-- plantillas reutilizables (`templates`)
-- caché simple de sugerencias IA (`aiSuggestions`)
-- biblioteca rápida de alimentos (`foodLibrary`)
-
-Eso deja buen camino para futuras mejoras, por ejemplo:
-
-- objetivos diarios y comparación con objetivo
-- historial por fecha
-- base de datos de alimentos más grande
-- aplicar una sugerencia IA directamente como nueva comida
-- generación de alternativas según objetivo, por ejemplo volumen o definición

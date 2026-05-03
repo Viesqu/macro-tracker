@@ -108,10 +108,27 @@ function readJsonBody(req) {
   });
 }
 
+function round(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
+}
+
+function normalizeFoodName(name) {
+  const value = String(name || '').trim();
+  const legacyMap = {
+    'Arroz cocido': 'Arroz',
+    'Patata cocida': 'Patata',
+    'Pasta cocida': 'Pasta seca',
+    'Garbanzos cocidos': 'Garbanzos secos',
+    'Lentejas cocidas': 'Lentejas secas',
+    'Atún al natural': 'Atún fresco',
+  };
+  return legacyMap[value] || value;
+}
+
 function sanitizeFoods(foods) {
   if (!Array.isArray(foods)) return [];
   return foods.slice(0, 12).map((food) => ({
-    name: String(food?.name || '').slice(0, 80),
+    name: normalizeFoodName(String(food?.name || '').slice(0, 80)),
     grams: Number(food?.grams || 0),
     protein: Number(food?.protein || 0),
     carbs: Number(food?.carbs || 0),
@@ -134,10 +151,6 @@ function calculateTotals(foods) {
   );
 }
 
-function round(value) {
-  return Math.round((Number(value) + Number.EPSILON) * 10) / 10;
-}
-
 function buildPrompt(meal, library) {
   const foods = sanitizeFoods(meal?.foods);
   if (!foods.length) {
@@ -146,10 +159,14 @@ function buildPrompt(meal, library) {
 
   const totals = calculateTotals(foods);
   const libraryItems = Object.entries(library || {})
-    .slice(0, 40)
-    .map(([name, macros]) => ({ name, ...macros }));
+    .slice(0, 60)
+    .map(([name, macros]) => ({ name: normalizeFoodName(name), ...macros }));
 
-  return `Eres un nutricionista práctico. Devuelve exactamente JSON válido, sin markdown.
+  return `Eres un nutricionista práctico especializado en comidas de gimnasio en España.
+Regla innegociable: TODOS los pesos y referencias deben ir en crudo, salvo alimentos que no requieren cocción (yogur, pan, aceite, whey, etc.), que se expresan tal cual se consumen.
+No uses nombres ambiguos como "arroz cocido", "pasta cocida" o "patata cocida".
+Si propones arroz, pasta, legumbres secas, pollo, pescado, carne o patata, exprésalos con gramos en crudo.
+Devuelve exactamente JSON válido, sin markdown.
 Genera 3 alternativas de comida con macros y kcal parecidas a la comida original.
 Prioriza alimentos comunes, fáciles de encontrar en España y combinaciones realistas.
 Mantén una desviación razonable, idealmente dentro de ±15% en kcal y macros totales.
@@ -170,7 +187,7 @@ Respuesta requerida:
 }
 
 Comida original:
-${JSON.stringify({ name: meal?.name || 'Comida', foods, totals }, null, 2)}
+${JSON.stringify({ name: meal?.name || 'Comida', foods, totals, rule: 'Todos los pesos van en crudo.' }, null, 2)}
 
 Biblioteca disponible de referencia:
 ${JSON.stringify(libraryItems, null, 2)}`;
@@ -194,15 +211,15 @@ async function requestAiJson(prompt) {
           messages: [
             {
               role: 'system',
-              content: 'Responde solo con JSON válido. No uses markdown ni texto fuera del JSON.',
+              content: 'Responde solo con JSON válido. Todas las cantidades deben respetar la regla de pesos en crudo salvo productos listos para consumir.',
             },
             {
               role: 'user',
               content: prompt,
             },
           ],
-          temperature: 0.6,
-          max_tokens: 900,
+          temperature: 0.55,
+          max_tokens: 950,
           response_format: { type: 'json_object' },
         }),
       });
@@ -256,70 +273,187 @@ async function requestAiJson(prompt) {
   throw error;
 }
 
-function normalizeSuggestion(suggestion) {
-  const foods = sanitizeFoods(suggestion?.foods || []).map((food) => ({ name: food.name, grams: round(food.grams) }));
-  const macros = suggestion?.macros || calculateTotals(foods.map((food) => ({ ...food, protein: 0, carbs: 0, fat: 0, kcal: 0 })));
+function normalizeSuggestion(suggestion, library) {
+  const normalizedFoods = sanitizeFoods(suggestion?.foods || []).map((food) => {
+    const libraryMacros = library?.[food.name] || {};
+    return {
+      name: food.name,
+      grams: round(food.grams),
+      protein: Number(libraryMacros.protein || 0),
+      carbs: Number(libraryMacros.carbs || 0),
+      fat: Number(libraryMacros.fat || 0),
+      kcal: Number(libraryMacros.kcal || 0),
+    };
+  });
+  const calculatedMacros = calculateTotals(normalizedFoods);
+  const rawMacros = suggestion?.macros || {};
+  const hasUsefulMacros = ['protein', 'carbs', 'fat', 'kcal'].some((key) => Number(rawMacros[key] || 0) > 0);
+  const macros = hasUsefulMacros ? rawMacros : calculatedMacros;
   return {
     name: String(suggestion?.name || 'Alternativa').slice(0, 80),
-    reason: String(suggestion?.reason || '').slice(0, 280),
-    foods,
+    reason: `${String(suggestion?.reason || '').slice(0, 240)}${String(suggestion?.reason || '').includes('crudo') ? '' : ' Todo está expresado en crudo.'}`.trim(),
+    foods: normalizedFoods.map((food) => ({ name: food.name, grams: food.grams })),
     macros: {
-      protein: round(macros.protein || 0),
-      carbs: round(macros.carbs || 0),
-      fat: round(macros.fat || 0),
-      kcal: round(macros.kcal || 0),
+      protein: round(macros.protein || calculatedMacros.protein || 0),
+      carbs: round(macros.carbs || calculatedMacros.carbs || 0),
+      fat: round(macros.fat || calculatedMacros.fat || 0),
+      kcal: round(macros.kcal || calculatedMacros.kcal || 0),
     },
+  };
+}
+
+function getFoodProfile(food) {
+  const protein = Number(food?.protein || 0);
+  const carbs = Number(food?.carbs || 0);
+  const fat = Number(food?.fat || 0);
+  const kcal = Number(food?.kcal || 0);
+
+  let group = 'mixto';
+  if (fat >= 45 || (fat > protein && fat > carbs && carbs < 15)) group = 'grasa';
+  else if (protein >= 18 && carbs <= 12) group = 'proteina';
+  else if (carbs >= 18 && fat <= 10) group = 'carbohidrato';
+
+  return {
+    protein,
+    carbs,
+    fat,
+    kcal,
+    group,
+    isLiquidFat: /aceite/i.test(food?.name || ''),
+    isFruit: /(plátano|manzana|frutos rojos|piña)/i.test(food?.name || ''),
+    isDairy: /(yogur|queso|skyr|requesón|leche)/i.test(food?.name || ''),
+    isEgg: /huevo/i.test(food?.name || ''),
+    isLegume: /(garbanzo|lenteja|alubia|edamame)/i.test(food?.name || ''),
+    isProteinPowder: /(whey|proteína)/i.test(food?.name || ''),
+  };
+}
+
+function scoreReplacement(baseFood, candidateFood) {
+  const base = getFoodProfile(baseFood);
+  const candidate = getFoodProfile(candidateFood);
+  let score = 0;
+
+  if (base.group === candidate.group) score += 5;
+  score -= Math.abs(base.protein - candidate.protein) * 0.16;
+  score -= Math.abs(base.carbs - candidate.carbs) * 0.12;
+  score -= Math.abs(base.fat - candidate.fat) * 0.18;
+  score -= Math.abs(base.kcal - candidate.kcal) * 0.03;
+
+  if (base.isFruit === candidate.isFruit) score += 1.2;
+  if (base.isDairy === candidate.isDairy) score += 1.2;
+  if (base.isEgg === candidate.isEgg) score += 1;
+  if (base.isLegume === candidate.isLegume) score += 1;
+  if (base.isLiquidFat === candidate.isLiquidFat) score += 1.5;
+  if (base.isProteinPowder === candidate.isProteinPowder) score += 1.2;
+  if ((baseFood?.name || '') === (candidateFood?.name || '')) score += 0.4;
+
+  return score;
+}
+
+function chooseReplacement(baseFood, libraryEntries, usedNames = new Set(), offset = 0) {
+  const scored = libraryEntries
+    .map(([name, macros]) => ({ name, ...macros, score: scoreReplacement(baseFood, { name, ...macros }) }))
+    .sort((a, b) => b.score - a.score);
+
+  const uniqueChoices = scored.filter((candidate) => !usedNames.has(candidate.name) || candidate.name === baseFood.name);
+  const pool = uniqueChoices.length ? uniqueChoices : scored;
+  return pool[Math.min(offset, Math.max(pool.length - 1, 0))] || { name: baseFood.name, ...baseFood };
+}
+
+function scaleReplacementGrams(baseFood, replacement, variant = 'balanced') {
+  const baseTotals = calculateTotals([baseFood]);
+  const repPer100 = {
+    protein: Number(replacement.protein || 0),
+    carbs: Number(replacement.carbs || 0),
+    fat: Number(replacement.fat || 0),
+    kcal: Math.max(Number(replacement.kcal || 0), 1),
+  };
+
+  let targetKcal = baseTotals.kcal;
+  if (variant === 'protein') targetKcal *= 0.98;
+  if (variant === 'comfort') targetKcal *= 1.04;
+
+  const ratioByKcal = (targetKcal / repPer100.kcal) * 100;
+  const ratioByProtein = repPer100.protein > 0 ? (baseTotals.protein / repPer100.protein) * 100 : ratioByKcal;
+  const ratioByCarbs = repPer100.carbs > 0 ? (baseTotals.carbs / repPer100.carbs) * 100 : ratioByKcal;
+  const ratioByFat = repPer100.fat > 0 ? (baseTotals.fat / repPer100.fat) * 100 : ratioByKcal;
+
+  let grams = ratioByKcal;
+  const profile = getFoodProfile(baseFood);
+  if (profile.group === 'proteina') grams = (ratioByProtein * 0.65) + (ratioByKcal * 0.35);
+  if (profile.group === 'carbohidrato') grams = (ratioByCarbs * 0.7) + (ratioByKcal * 0.3);
+  if (profile.group === 'grasa') grams = (ratioByFat * 0.75) + (ratioByKcal * 0.25);
+  if (variant === 'protein' && profile.group === 'proteina') grams *= 1.06;
+  if (variant === 'comfort' && profile.group === 'carbohidrato') grams *= 1.08;
+
+  return Math.max(profile.isLiquidFat ? 5 : 20, Math.min(450, round(grams)));
+}
+
+function buildSuggestionFromVariant(meal, foods, libraryEntries, variant) {
+  const originalTotals = calculateTotals(foods);
+  const usedNames = new Set();
+  const nextFoods = foods.map((food, index) => {
+    const replacement = chooseReplacement(food, libraryEntries, usedNames, (variant.offset + index) % 4);
+    usedNames.add(replacement.name);
+    const grams = scaleReplacementGrams(food, replacement, variant.mode);
+    return {
+      name: normalizeFoodName(replacement.name),
+      grams,
+      protein: replacement.protein ?? food.protein,
+      carbs: replacement.carbs ?? food.carbs,
+      fat: replacement.fat ?? food.fat,
+      kcal: replacement.kcal ?? food.kcal,
+      originalName: food.name,
+    };
+  });
+
+  const macros = calculateTotals(nextFoods);
+  const swappedCount = nextFoods.filter((food) => food.name !== food.originalName).length;
+  const mainSwap = nextFoods.find((food) => food.name !== food.originalName);
+
+  return {
+    name: `${meal?.name || 'Comida'} · ${variant.suffix}`,
+    reason: swappedCount
+      ? `He cambiado ${swappedCount} alimento${swappedCount > 1 ? 's' : ''}${mainSwap ? `, por ejemplo ${mainSwap.originalName} por ${mainSwap.name}` : ''}, intentando mantener macros parecidas. Todo va en crudo.`
+      : 'He ajustado cantidades dentro de la misma idea de comida para mantener macros parecidas. Todo va en crudo.',
+    foods: nextFoods.map((food) => ({ name: food.name, grams: round(food.grams) })),
+    macros: {
+      protein: round(macros.protein),
+      carbs: round(macros.carbs),
+      fat: round(macros.fat),
+      kcal: round(macros.kcal),
+    },
+    delta: Math.abs(macros.protein - originalTotals.protein) + Math.abs(macros.carbs - originalTotals.carbs) + Math.abs(macros.fat - originalTotals.fat),
   };
 }
 
 function buildFallbackSuggestions(meal, library) {
   const foods = sanitizeFoods(meal?.foods);
-  const libraryMap = library || {};
-  const swapMap = {
-    'Pechuga de pollo': ['Pavo', 'Atún al natural', 'Tofu firme'],
-    'Arroz cocido': ['Pasta cocida', 'Patata cocida', 'Boniato'],
-    'Salmón': ['Atún al natural', 'Pechuga de pollo', 'Tofu firme'],
-    'Avena': ['Pan integral', 'Yogur griego 0%', 'Plátano'],
-    'Patata cocida': ['Boniato', 'Arroz cocido', 'Pasta cocida'],
-    'Claras de huevo': ['Huevo entero', 'Yogur griego 0%', 'Queso fresco batido 0%'],
-    'Aceite de oliva': ['Aguacate', 'Almendras'],
-  };
+  const libraryEntries = Object.entries(library || {}).map(([name, macros]) => [normalizeFoodName(name), macros]);
+  if (!foods.length || !libraryEntries.length) return [];
 
-  const plans = [
-    { suffix: 'versión práctica', ratio: 1, offset: 0 },
-    { suffix: 'para variar', ratio: 0.92, offset: 1 },
-    { suffix: 'más saciante', ratio: 1.08, offset: 2 },
+  const variants = [
+    { suffix: 'cambio fácil', mode: 'balanced', offset: 0 },
+    { suffix: 'más proteica', mode: 'protein', offset: 1 },
+    { suffix: 'más saciante', mode: 'comfort', offset: 2 },
+    { suffix: 'despensa básica', mode: 'balanced', offset: 3 },
   ];
 
-  return plans.map((plan) => {
-    const nextFoods = foods.map((food, index) => {
-      const options = swapMap[food.name] || [food.name];
-      const replacementName = options[(index + plan.offset) % options.length] || food.name;
-      const replacement = libraryMap[replacementName] || libraryMap[food.name] || food;
-      const grams = Math.max(20, round(food.grams * (index === 0 ? plan.ratio : 1)));
-      return {
-        name: replacementName,
-        grams,
-        protein: replacement.protein ?? food.protein,
-        carbs: replacement.carbs ?? food.carbs,
-        fat: replacement.fat ?? food.fat,
-        kcal: replacement.kcal ?? food.kcal,
-      };
-    });
+  const suggestions = variants
+    .map((variant) => buildSuggestionFromVariant(meal, foods, libraryEntries, variant))
+    .sort((a, b) => a.delta - b.delta)
+    .map(({ delta, ...suggestion }) => suggestion);
 
-    const macros = calculateTotals(nextFoods);
-    return {
-      name: `${meal?.name || 'Comida'} · ${plan.suffix}`,
-      reason: 'He preparado una alternativa de respaldo manteniendo el estilo de la comida y macros parecidas.',
-      foods: nextFoods.map((food) => ({ name: food.name, grams: round(food.grams) })),
-      macros: {
-        protein: round(macros.protein),
-        carbs: round(macros.carbs),
-        fat: round(macros.fat),
-        kcal: round(macros.kcal),
-      },
-    };
-  });
+  const deduped = [];
+  const seen = new Set();
+  for (const suggestion of suggestions) {
+    const signature = suggestion.foods.map((food) => `${food.name}:${food.grams}`).join('|');
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    deduped.push(suggestion);
+  }
+
+  return deduped.slice(0, 3);
 }
 
 function humanizeAiError(error, meal, library) {
@@ -337,14 +471,14 @@ function humanizeAiError(error, meal, library) {
       status: 200,
       error: 'Los modelos gratuitos han alcanzado su límite temporal.',
       humanMessage: `La IA gratuita está saturada ahora mismo, pero no te dejo tirado.${retryAfterText}`,
-      providerMessage: `He pasado al plan B local para que sigas usando la función.${triedModelsText}`,
+      providerMessage: `He pasado al plan B local para que sigas usando la función con pesos en crudo.${triedModelsText}`,
       fallbackUsed: true,
       fallbackSuggestions,
       attempts,
       banner: {
         tone: 'warning',
         title: 'Plan B activado',
-        body: 'Los modelos gratuitos no estaban disponibles y he generado alternativas locales.',
+        body: 'Los modelos gratuitos no estaban disponibles y he generado alternativas locales respetando pesos en crudo.',
       },
     };
   }
@@ -361,7 +495,7 @@ function humanizeAiError(error, meal, library) {
       banner: {
         tone: 'warning',
         title: 'Usando alternativa local',
-        body: 'La clave del proveedor ha fallado, así que he preparado sugerencias de respaldo.',
+        body: 'La clave del proveedor ha fallado, así que he preparado sugerencias de respaldo en crudo.',
       },
     };
   }
@@ -378,7 +512,7 @@ function humanizeAiError(error, meal, library) {
       banner: {
         tone: 'warning',
         title: 'Respaldo local activo',
-        body: 'La respuesta remota falló y he generado opciones automáticas en local.',
+        body: 'La respuesta remota falló y he generado opciones automáticas en local, todas con referencia en crudo.',
       },
     };
   }
@@ -394,27 +528,28 @@ function humanizeAiError(error, meal, library) {
     banner: {
       tone: 'warning',
       title: 'Mostrando plan B',
-      body: 'La generación con IA falló y he dejado alternativas locales para que no te quedes sin nada.',
+      body: 'La generación con IA falló y he dejado alternativas locales en crudo para que no te quedes sin nada.',
     },
   };
 }
 
 async function suggestMealAlternatives(meal, library) {
-  const { parsed, usedModel, attempts } = await requestAiJson(buildPrompt(meal, library));
+  const normalizedLibrary = Object.fromEntries(Object.entries(library || {}).map(([name, macros]) => [normalizeFoodName(name), macros]));
+  const { parsed, usedModel, attempts } = await requestAiJson(buildPrompt(meal, normalizedLibrary));
   const fallbackAttemptCount = Array.isArray(attempts) ? attempts.length : 0;
   return {
-    note: parsed.note || 'Sugerencias orientativas, revisa cantidades antes de usarlas.',
+    note: parsed.note || 'Sugerencias orientativas, revisa cantidades antes de usarlas. Todo está expresado en crudo o en su formato comercial tal cual.',
     banner: {
       tone: 'success',
       title: fallbackAttemptCount ? 'Alternativas generadas tras reintento' : 'Alternativas generadas con IA',
-      body: fallbackAttemptCount ? `He cambiado automáticamente de modelo hasta encontrar uno disponible.` : undefined,
+      body: fallbackAttemptCount ? 'He cambiado automáticamente de modelo hasta encontrar uno disponible.' : 'Todas las cantidades mantienen la regla de registrar en crudo.',
     },
     provider: {
       provider: AI_CONFIG.provider,
       model: usedModel,
       fallbackCount: fallbackAttemptCount,
     },
-    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3).map(normalizeSuggestion) : [],
+    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3).map((suggestion) => normalizeSuggestion(suggestion, normalizedLibrary)) : [],
   };
 }
 
@@ -440,7 +575,7 @@ http.createServer(async (req, res) => {
       model: AI_CONFIG.model,
       models: AI_CONFIG.models,
       reason: AI_CONFIG.enabled
-        ? 'IA lista para sugerir alternativas parecidas sin exponer la clave al navegador.'
+        ? 'IA lista para sugerir alternativas parecidas sin exponer la clave al navegador, siempre en crudo.'
         : AI_CONFIG.setupHint,
       setupHint: AI_CONFIG.setupHint,
     });
@@ -492,4 +627,3 @@ http.createServer(async (req, res) => {
   console.log(`Macros Flex en http://${host}:${port}`);
   console.log(`IA: ${AI_CONFIG.enabled ? AI_CONFIG.label : `desactivada (${AI_CONFIG.setupHint})`}`);
 });
-

@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#4f46e5" />
     <meta
       name="description"
-      content="Macro tracker visual para registrar comidas, gramos y macros diarios desde cualquier dispositivo."
+      content="Macro tracker visual para registrar comidas, gramos y macros diarios siempre en crudo desde cualquier dispositivo."
     />
     <title>Macros Flex</title>
     <link rel="manifest" href="./manifest.webmanifest" />
@@ -16,10 +16,10 @@
     <div class="app-shell">
       <header class="hero panel">
         <div class="hero-copy">
-          <p class="eyebrow">Macros diarios, sin fricción</p>
+          <p class="eyebrow">Macros diarios, siempre en crudo</p>
           <h1>Macros Flex</h1>
           <p class="subtitle">
-            Una vista más premium para construir tu día comida a comida, ajustar gramos rápido y recibir alternativas visuales cuando quieres variar sin romper tus macros.
+            Construye tu día comida a comida, ajusta gramos en crudo rápido y recibe alternativas visuales cuando quieres variar sin romper tus macros.
           </p>
           <div class="hero-actions">
             <button id="addMealBtn" class="primary">+ Añadir comida</button>
@@ -34,7 +34,7 @@
             <span class="mini-label">Qué puedes hacer</span>
             <ul class="mini-list">
               <li>Nombres neutros como Comida 1, Comida 2 y Comida 3</li>
-              <li>Renombrar cada bloque a tu manera en cualquier momento</li>
+              <li>Registrar siempre alimentos y gramos en crudo</li>
               <li>Pedir alternativas parecidas con IA y ver su estado más claro</li>
             </ul>
           </div>
@@ -46,13 +46,18 @@
       </header>
 
       <section class="summary-grid" id="dailySummary"></section>
+      <section class="panel" aria-label="Regla fija de pesos">
+        <p class="eyebrow">Regla fija</p>
+        <h2>Todo se apunta en crudo</h2>
+        <p id="rawRuleNotice">Todos los alimentos se registran siempre en crudo o en su formato comercial tal cual si no aplica cocinarlo.</p>
+      </section>
 
       <section class="workspace-grid">
         <section class="panel controls-panel">
           <div>
             <p class="eyebrow">Atajos</p>
             <h2>Plantillas y datos</h2>
-            <p>Recupera comidas frecuentes, exporta tu día o importa una copia sin tocar el resto de la app.</p>
+            <p>Recupera comidas frecuentes, exporta tu día o importa una copia sin tocar el resto de la app ni la regla de pesar en crudo.</p>
           </div>
           <div class="controls-stack">
             <label>
@@ -78,7 +83,7 @@
         <section class="panel ai-panel" id="aiStatusPanel">
           <div>
             <p class="eyebrow">Alternativas con IA</p>
-            <h2>Te propongo cambios realistas</h2>
+            <h2>Te propongo cambios realistas en crudo</h2>
             <p id="aiStatusText" class="ai-status-text">Comprobando disponibilidad…</p>
             <p id="aiProviderMeta" class="ai-provider-meta">Proveedor: comprobando…</p>
             <p id="aiSetupHint" class="ai-setup-hint">La app puede funcionar perfectamente aunque esta parte no esté activa.</p>
@@ -86,7 +91,7 @@
           </div>
           <div class="ai-panel-side">
             <div class="ai-panel-note" id="aiStatusBadge">IA</div>
-            <p class="ai-side-note">Si la IA falla o está saturada, la app intentará darte una salida útil y entendible.</p>
+            <p class="ai-side-note">Si la IA falla o está saturada, la app intentará darte una salida útil, entendible y coherente con pesos en crudo.</p>
           </div>
         </section>
       </section>
@@ -108,7 +113,7 @@
           </div>
           <div class="meal-actions">
             <button class="secondary add-food-btn">+ Alimento</button>
-            <button class="ai-button suggest-meal-btn">✨ Ver alternativas</button>
+            <button class="ai-button suggest-meal-btn">✨ Ver alternativas en crudo</button>
             <button class="ghost duplicate-meal-btn">Duplicar</button>
             <button class="danger remove-meal-btn">Borrar</button>
           </div>
@@ -119,7 +124,7 @@
             <thead>
               <tr>
                 <th>Alimento</th>
-                <th>g</th>
+                <th>g en crudo</th>
                 <th>P/100g</th>
                 <th>HC/100g</th>
                 <th>G/100g</th>
@@ -143,10 +148,10 @@
         <div class="meal-ai-box hidden">
           <div class="meal-ai-header">
             <div>
-              <strong>Alternativas sugeridas</strong>
+              <strong>Alternativas sugeridas en crudo</strong>
               <p class="meal-ai-status"></p>
             </div>
-            <span class="meal-ai-tag">IA</span>
+            <span class="meal-ai-tag">IA / Plan B</span>
           </div>
           <div class="meal-ai-stage"></div>
           <div class="meal-ai-results"></div>
@@ -158,7 +163,7 @@
       <tr>
         <td data-label="Alimento">
           <div class="food-name-cell">
-            <input class="food-name" list="foodOptions" type="text" placeholder="Ej. arroz cocido" />
+            <input class="food-name" list="foodOptions" type="text" placeholder="Ej. arroz o pollo, siempre en crudo" />
           </div>
         </td>
         <td data-label="Gramos"><input class="grams" type="number" min="0" step="1" value="100" /></td>

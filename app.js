@@ -1,5 +1,5 @@
-const STORAGE_KEY = "macros-flex-state-v3";
-const LEGACY_STORAGE_KEY = "macros-flex-state-v2";
+const STORAGE_KEY = "macros-flex-state-v4";
+const LEGACY_STORAGE_KEYS = ["macros-flex-state-v3", "macros-flex-state-v2"];
 
 const SUPABASE_URL = "";
 const SUPABASE_ANON_KEY = "";
@@ -45,38 +45,61 @@ function scheduleSave() {
 }
 
 const foodLibrary = {
-  "Arroz cocido": { protein: 2.7, carbs: 28, fat: 0.3, kcal: 130 },
-  "Pechuga de pollo": { protein: 31, carbs: 0, fat: 3.6, kcal: 165 },
+  "Arroz": { protein: 7, carbs: 78, fat: 0.6, kcal: 360 },
+  "Arroz basmati": { protein: 8.9, carbs: 77, fat: 0.6, kcal: 356 },
+  "Arroz jazmín": { protein: 7.1, carbs: 80, fat: 0.5, kcal: 360 },
+  "Pasta seca": { protein: 13, carbs: 75, fat: 1.5, kcal: 371 },
   "Avena": { protein: 13, carbs: 60, fat: 7, kcal: 389 },
-  "Plátano": { protein: 1.1, carbs: 23, fat: 0.3, kcal: 89 },
-  "Claras de huevo": { protein: 11, carbs: 0.7, fat: 0.2, kcal: 52 },
-  "Huevo entero": { protein: 13, carbs: 1.1, fat: 11, kcal: 155 },
-  "Salmón": { protein: 20, carbs: 0, fat: 13, kcal: 208 },
-  "Patata cocida": { protein: 2, carbs: 17, fat: 0.1, kcal: 77 },
-  "Yogur griego 0%": { protein: 10, carbs: 3.6, fat: 0.4, kcal: 59 },
+  "Copos de maíz": { protein: 7.5, carbs: 84, fat: 0.9, kcal: 357 },
   "Pan integral": { protein: 12, carbs: 43, fat: 4.2, kcal: 252 },
-  "Aceite de oliva": { protein: 0, carbs: 0, fat: 100, kcal: 900 },
-  "Almendras": { protein: 21, carbs: 22, fat: 49, kcal: 579 },
-  "Pavo": { protein: 24, carbs: 0, fat: 1.5, kcal: 111 },
-  "Ternera magra": { protein: 26, carbs: 0, fat: 10, kcal: 190 },
-  "Tofu firme": { protein: 13, carbs: 1.9, fat: 8, kcal: 144 },
-  "Pasta cocida": { protein: 5.8, carbs: 31, fat: 1.1, kcal: 157 },
-  "Boniato": { protein: 1.6, carbs: 20.1, fat: 0.1, kcal: 86 },
-  "Atún al natural": { protein: 24, carbs: 0, fat: 1, kcal: 109 },
-  "Queso fresco batido 0%": { protein: 8, carbs: 4, fat: 0.2, kcal: 46 },
+  "Tortitas de arroz": { protein: 8, carbs: 81, fat: 2.8, kcal: 387 },
+  "Tortilla de trigo": { protein: 8, carbs: 50, fat: 7, kcal: 310 },
   "Tortilla de maíz": { protein: 6, carbs: 44, fat: 2.8, kcal: 218 },
-  "Garbanzos cocidos": { protein: 8.2, carbs: 27.4, fat: 2.6, kcal: 164 },
-  "Lentejas cocidas": { protein: 9, carbs: 20, fat: 0.4, kcal: 116 },
-  "Aguacate": { protein: 2, carbs: 9, fat: 15, kcal: 160 },
+  "Patata": { protein: 2, carbs: 17, fat: 0.1, kcal: 77 },
+  "Boniato": { protein: 1.6, carbs: 20.1, fat: 0.1, kcal: 86 },
+  "Plátano": { protein: 1.1, carbs: 23, fat: 0.3, kcal: 89 },
   "Manzana": { protein: 0.3, carbs: 14, fat: 0.2, kcal: 52 },
   "Frutos rojos": { protein: 0.8, carbs: 12, fat: 0.3, kcal: 57 },
+  "Piña": { protein: 0.5, carbs: 13, fat: 0.1, kcal: 50 },
+  "Aguacate": { protein: 2, carbs: 9, fat: 15, kcal: 160 },
+  "Pechuga de pollo": { protein: 23, carbs: 0, fat: 2, kcal: 110 },
+  "Pavo": { protein: 24, carbs: 0, fat: 1.5, kcal: 111 },
+  "Ternera magra": { protein: 21, carbs: 0, fat: 6, kcal: 140 },
+  "Salmón": { protein: 20, carbs: 0, fat: 13, kcal: 208 },
+  "Merluza": { protein: 18, carbs: 0, fat: 1.8, kcal: 82 },
+  "Bacalao": { protein: 17.7, carbs: 0, fat: 0.7, kcal: 74 },
+  "Atún fresco": { protein: 23.3, carbs: 0, fat: 4.9, kcal: 144 },
+  "Gambas": { protein: 20, carbs: 0.9, fat: 1.7, kcal: 99 },
+  "Claras de huevo": { protein: 11, carbs: 0.7, fat: 0.2, kcal: 52 },
+  "Huevo entero": { protein: 13, carbs: 1.1, fat: 11, kcal: 155 },
+  "Tofu firme": { protein: 13, carbs: 1.9, fat: 8, kcal: 144 },
+  "Tempeh": { protein: 20, carbs: 9, fat: 11, kcal: 192 },
+  "Seitán": { protein: 24, carbs: 6, fat: 2, kcal: 140 },
+  "Yogur griego 0%": { protein: 10, carbs: 3.6, fat: 0.4, kcal: 59 },
+  "Skyr natural": { protein: 11, carbs: 4, fat: 0.2, kcal: 63 },
+  "Queso fresco batido 0%": { protein: 8, carbs: 4, fat: 0.2, kcal: 46 },
+  "Requesón": { protein: 11, carbs: 3, fat: 4.3, kcal: 98 },
+  "Leche semidesnatada": { protein: 3.2, carbs: 4.8, fat: 1.6, kcal: 47 },
+  "Garbanzos secos": { protein: 19, carbs: 61, fat: 6, kcal: 364 },
+  "Lentejas secas": { protein: 25, carbs: 54, fat: 1.1, kcal: 352 },
+  "Alubias secas": { protein: 21, carbs: 61, fat: 1.6, kcal: 333 },
+  "Edamame": { protein: 11.9, carbs: 8.9, fat: 5.2, kcal: 122 },
+  "Aceite de oliva": { protein: 0, carbs: 0, fat: 100, kcal: 900 },
+  "Almendras": { protein: 21, carbs: 22, fat: 49, kcal: 579 },
+  "Nueces": { protein: 15, carbs: 14, fat: 65, kcal: 654 },
+  "Crema de cacahuete": { protein: 26, carbs: 17, fat: 49, kcal: 588 },
+  "Semillas de chía": { protein: 17, carbs: 42, fat: 31, kcal: 486 },
+  "Chocolate negro 85%": { protein: 11, carbs: 19, fat: 46, kcal: 598 },
+  "Proteína whey": { protein: 80, carbs: 7, fat: 6, kcal: 395 },
 };
+
+const RAW_GUIDANCE = "Todos los alimentos se registran siempre en crudo o en su formato comercial tal cual si no aplica cocinarlo.";
 
 const defaultState = {
   meals: [
     createMeal("Comida 1", [createFood("Avena", 80), createFood("Claras de huevo", 200), createFood("Plátano", 120)]),
-    createMeal("Comida 2", [createFood("Pechuga de pollo", 180), createFood("Arroz cocido", 250), createFood("Aceite de oliva", 10)]),
-    createMeal("Comida 3", [createFood("Salmón", 180), createFood("Patata cocida", 300)]),
+    createMeal("Comida 2", [createFood("Pechuga de pollo", 180), createFood("Arroz", 90), createFood("Aceite de oliva", 10)]),
+    createMeal("Comida 3", [createFood("Salmón", 180), createFood("Patata", 300)]),
   ],
   templates: [],
   aiSuggestions: {},
@@ -116,6 +139,19 @@ function normalizeMealNames(meals) {
   }));
 }
 
+function normalizeFoodName(name) {
+  const value = String(name || "").trim();
+  const legacyMap = {
+    "Arroz cocido": "Arroz",
+    "Patata cocida": "Patata",
+    "Pasta cocida": "Pasta seca",
+    "Garbanzos cocidos": "Garbanzos secos",
+    "Lentejas cocidas": "Lentejas secas",
+    "Atún al natural": "Atún fresco",
+  };
+  return legacyMap[value] || value;
+}
+
 function cloneMeal(meal) {
   return {
     id: uid(),
@@ -131,15 +167,20 @@ function sanitizeState(parsed) {
       id: meal?.id || uid(),
       name: meal?.name || getDefaultMealName(index),
       foods: Array.isArray(meal?.foods) && meal.foods.length
-        ? meal.foods.map((food) => ({
-            id: food?.id || uid(),
-            name: food?.name || "",
-            grams: Number(food?.grams || 0),
-            protein: Number(food?.protein || 0),
-            carbs: Number(food?.carbs || 0),
-            fat: Number(food?.fat || 0),
-            kcal: Number(food?.kcal || 0),
-          }))
+        ? meal.foods.map((food) => {
+            const normalizedName = normalizeFoodName(food?.name || "");
+            const preset = foodLibrary[normalizedName];
+            const hadLegacyName = normalizedName !== (food?.name || "");
+            return {
+              id: food?.id || uid(),
+              name: normalizedName,
+              grams: Number(food?.grams || 0),
+              protein: hadLegacyName && preset ? preset.protein : Number(food?.protein || preset?.protein || 0),
+              carbs: hadLegacyName && preset ? preset.carbs : Number(food?.carbs || preset?.carbs || 0),
+              fat: hadLegacyName && preset ? preset.fat : Number(food?.fat || preset?.fat || 0),
+              kcal: hadLegacyName && preset ? preset.kcal : Number(food?.kcal || preset?.kcal || 0),
+            };
+          })
         : [createFood()],
     }))
   );
@@ -159,7 +200,7 @@ async function loadState() {
   }
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = [STORAGE_KEY, ...LEGACY_STORAGE_KEYS].map((key) => localStorage.getItem(key)).find(Boolean);
     if (!raw) return structuredClone(defaultState);
     return sanitizeState(JSON.parse(raw));
   } catch {
@@ -181,10 +222,11 @@ const aiProviderMeta = document.getElementById("aiProviderMeta");
 const aiSetupHint = document.getElementById("aiSetupHint");
 const heroHighlights = document.getElementById("heroHighlights");
 const aiPanelState = document.getElementById("aiPanelState");
+const rawRuleNotice = document.getElementById("rawRuleNotice");
 
 function persistStateOnly() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  localStorage.removeItem(LEGACY_STORAGE_KEY);
+  LEGACY_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
   scheduleSave();
 }
 
@@ -245,19 +287,19 @@ function setAiAvailability(next) {
   aiStatusBadge.classList.toggle("offline", !aiAvailability.enabled);
   aiProviderMeta.textContent = aiAvailability.provider ? `Proveedor: ${aiAvailability.provider}` : "Proveedor: no configurado en este despliegue";
   aiSetupHint.textContent = aiAvailability.enabled
-    ? "La clave vive solo en backend. Si el proveedor se satura, la app mostrará mensajes más humanos y puede devolver una alternativa de respaldo."
+    ? "La clave vive solo en backend. Si el proveedor se satura, la app mostrará propuestas coherentes en crudo con plan B local."
     : aiAvailability.setupHint || "Puedes usar la app sin IA hasta que añadas una clave al servidor.";
   aiPanelState.innerHTML = `
     <div class="ai-state-strip ${aiAvailability.enabled ? "online" : "offline"}">
       <span class="status-chip ${aiAvailability.enabled ? "" : "offline"}">${aiAvailability.enabled ? "Lista para sugerir" : "Modo manual"}</span>
       <p>${escapeHtml(
         aiAvailability.enabled
-          ? "Pide alternativas por comida y, si falla el proveedor, verás un plan B útil en vez de un error seco."
-          : "La parte inteligente está desactivada aquí, pero el tracking y las plantillas siguen funcionando igual."
+          ? "Pide alternativas por comida y, si falla el proveedor, verás un plan B útil respetando siempre pesos en crudo."
+          : "La parte inteligente está desactivada aquí, pero el tracking, los pesos en crudo y las plantillas siguen funcionando igual."
       )}</p>
     </div>
   `;
-} 
+}
 
 async function loadAiAvailability() {
   try {
@@ -271,7 +313,7 @@ async function loadAiAvailability() {
       model: data.model || null,
       setupHint: data.setupHint || "",
       reason: data.enabled
-        ? "Puedes pedir alternativas por comida. Si la IA falla, intentaremos darte una respuesta útil en vez de un error crudo."
+        ? "Puedes pedir alternativas por comida. Si la IA falla, intentaremos darte una respuesta útil y coherente en crudo."
         : data.reason || "La IA no está configurada en este despliegue. El resto de la app funciona igual.",
     });
   } catch {
@@ -322,7 +364,7 @@ function renderSummary() {
 
   heroHighlights.innerHTML = [
     [`${totals.meals}`, "bloques editables"],
-    [`${totals.foods}`, "alimentos hoy"],
+    [`${totals.foods}`, "alimentos en crudo hoy"],
     [aiAvailability.enabled ? "IA lista" : "IA opcional", aiAvailability.enabled ? "alternativas activas" : "sin bloquear la app"],
   ]
     .map(
@@ -334,6 +376,8 @@ function renderSummary() {
       `
     )
     .join("");
+
+  if (rawRuleNotice) rawRuleNotice.textContent = RAW_GUIDANCE;
 }
 
 function renderMeals() {
@@ -356,6 +400,7 @@ function renderMeals() {
 
     mealIndexBadge.textContent = getDefaultMealName(index);
     titleInput.value = meal.name;
+    titleInput.placeholder = `Comida ${index + 1}`;
     titleInput.addEventListener("input", (event) => {
       meal.name = event.target.value || getDefaultMealName(index);
       persistAndRender();
@@ -379,7 +424,7 @@ function renderMeals() {
     });
 
     suggestButton.disabled = !aiAvailability.enabled;
-    suggestButton.title = aiAvailability.enabled ? "Pide alternativas visuales y parecidas en macros" : "La IA no está configurada ahora mismo";
+    suggestButton.title = aiAvailability.enabled ? "Pide alternativas realistas manteniendo pesos y referencias en crudo" : "La IA no está configurada ahora mismo";
     suggestButton.addEventListener("click", async () => {
       await requestMealSuggestions(meal.id, suggestButton, aiStatus, aiResults, aiBox);
     });
@@ -398,6 +443,7 @@ function renderMeals() {
       };
 
       bindings.name.value = food.name;
+      bindings.name.placeholder = "Ej. arroz o pollo, siempre en crudo";
       bindings.grams.value = food.grams;
       bindings.protein.value = food.protein;
       bindings.carbs.value = food.carbs;
@@ -405,7 +451,7 @@ function renderMeals() {
       bindings.kcal.value = food.kcal;
 
       bindings.name.addEventListener("change", (event) => {
-        food.name = event.target.value;
+        food.name = normalizeFoodName(event.target.value);
         const preset = foodLibrary[food.name];
         if (preset) {
           food.protein = preset.protein;
@@ -464,7 +510,7 @@ function updateFoodTotal(target, food) {
 function updateMealUi(meal, meta, summary, spotlight, kcalValue, macroBars) {
   const totals = calculateMealTotals(meal);
   const totalMacros = Math.max(totals.protein + totals.carbs + totals.fat, 1);
-  meta.textContent = `${totals.items} alimentos · ${round(totals.kcal)} kcal`;
+  meta.textContent = `${totals.items} alimentos · ${round(totals.kcal)} kcal · pesos en crudo`;
   summary.innerHTML = [
     `Proteína ${round(totals.protein)} g`,
     `Hidratos ${round(totals.carbs)} g`,
@@ -531,7 +577,7 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
           <p>${escapeHtml(suggestion.reason || "")}</p>
           <ul class="ai-suggestion-list">
             ${(suggestion.foods || [])
-              .map((food) => `<li>${escapeHtml(food.name || "Alimento")}${food.grams ? `, ${round(food.grams)} g` : ""}</li>`)
+              .map((food) => `<li>${escapeHtml(food.name || "Alimento")}${food.grams ? `, ${round(food.grams)} g en crudo` : ""}</li>`)
               .join("")}
           </ul>
           <div class="ai-meta-row">
@@ -545,7 +591,7 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
     )
     .join("");
 
-  aiResults.innerHTML = `${banner}${cards || '<article class="ai-suggestion-card"><h3>Sin propuestas</h3><p>No hemos podido construir una alternativa útil todavía. Prueba a añadir más detalle a la comida o vuelve a intentarlo más tarde.</p></article>'}`;
+  aiResults.innerHTML = `${banner}${cards || '<article class="ai-suggestion-card"><h3>Sin propuestas todavía</h3><p>No salió ninguna alternativa redonda en este intento. Suele ayudar que la comida tenga al menos una proteína y una fuente clara de hidratos o grasa, siempre medidas en crudo.</p></article>'}`;
 }
 
 function buildAiStage(entry) {
@@ -569,16 +615,16 @@ async function requestMealSuggestions(mealId, button, statusNode, resultsNode, b
 
   state.aiSuggestions[mealId] = {
     generatedAt: new Date().toISOString(),
-    note: "Estamos preparando opciones similares para esta comida.",
+    note: "Estamos preparando opciones similares para esta comida en crudo.",
     banner: {
       tone: "info",
       title: "Pensando alternativas",
-      body: "Buscando una versión realista con macros parecidas.",
+      body: "Buscando una versión realista con macros parecidas y referencias en crudo.",
     },
     suggestions: [],
   };
   render();
-  statusNode.textContent = "Buscando opciones parecidas...";
+  statusNode.textContent = "Buscando opciones parecidas en crudo...";
   resultsNode.innerHTML = '<article class="ai-suggestion-card skeleton-card"><div class="skeleton-line short"></div><div class="skeleton-line"></div><div class="skeleton-line"></div></article>';
   boxNode.classList.remove("hidden");
   button.disabled = true;
@@ -595,7 +641,7 @@ async function requestMealSuggestions(mealId, button, statusNode, resultsNode, b
 
     state.aiSuggestions[mealId] = {
       generatedAt: new Date().toISOString(),
-      note: payload.note || "Sugerencias orientativas. Ajusta gramos o alimentos si quieres más precisión.",
+      note: payload.note || "Sugerencias orientativas. Si ves Plan B, son cambios automáticos razonables para no dejar la comida sin alternativas.",
       banner: payload.banner || { tone: payload.fallbackUsed ? "warning" : "success", title: "Sugerencias listas" },
       suggestions: Array.isArray(payload.suggestions)
         ? payload.suggestions.map((suggestion) => ({ ...suggestion, fitLabel: payload.fallbackUsed ? "Plan B" : "IA" }))
@@ -625,6 +671,7 @@ function buildDaySummaryText() {
   const totals = calculateDayTotals();
   const lines = [
     `Macros Flex · ${new Date().toLocaleDateString("es-ES")}`,
+    `Regla del día: todo va en crudo.`,
     `Total: ${round(totals.kcal)} kcal | P ${round(totals.protein)} g | HC ${round(totals.carbs)} g | G ${round(totals.fat)} g`,
     "",
   ];
@@ -633,7 +680,7 @@ function buildDaySummaryText() {
     const mealTotals = calculateMealTotals(meal);
     lines.push(`${meal.name}: ${round(mealTotals.kcal)} kcal | P ${round(mealTotals.protein)} g | HC ${round(mealTotals.carbs)} g | G ${round(mealTotals.fat)} g`);
     meal.foods.forEach((food) => {
-      lines.push(`- ${food.name || "Alimento"}, ${round(food.grams)} g`);
+      lines.push(`- ${food.name || "Alimento"}, ${round(food.grams)} g en crudo`);
     });
     lines.push("");
   });

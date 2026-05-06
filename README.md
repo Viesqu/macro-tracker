@@ -53,13 +53,12 @@ Además, la biblioteca ahora incluye más opciones útiles reales, por ejemplo:
 
 ## IA, cómo funciona
 
-La función de IA está pensada para ser limpia y segura:
+La función de alternativas ahora prioriza fiabilidad real:
 
-- Si **no** hay clave configurada, la app **no se rompe**.
-- Verás la UI de IA marcada como opcional y el botón de sugerencias quedará desactivado.
-- Si hay clave, cada comida tiene un botón para pedir alternativas parecidas.
-- El prompt obliga a mantener la regla de pesos en crudo.
-- Si falla la IA externa, el servidor genera un **Plan B local** con alternativas razonables y también en crudo.
+- Si **no** hay clave configurada, la app **no se rompe** y sigue ofreciendo alternativas con motor local.
+- Si hay clave, cada comida puede intentar una sugerencia remota, pero la respuesta **solo se acepta** si pasa filtros de coherencia.
+- El prompt obliga a mantener la regla de pesos en crudo y a usar solo alimentos de la biblioteca.
+- Si la IA externa falla, se satura o devuelve algo raro, el servidor **descarta esa respuesta** y genera un **Plan B local** más conservador.
 
 ### Activar IA en local o en servidor
 
@@ -122,4 +121,4 @@ Basta con un **redeploy simple** del servicio actual. No hay migraciones ni camb
 - `GET /health` debe devolver `ok: true`
 - al abrir la app, debe verse clara la regla de `todo en crudo`
 - al pulsar `✨ Ver alternativas en crudo` en una comida real, deben salir propuestas
-- si un modelo gratis devuelve 429 o falla, el servidor debe probar otro automáticamente y, si todos fallan, mostrar un plan B local
+- si un modelo gratis devuelve 429, falla o responde algo incoherente, el servidor debe descartarlo y mostrar un plan B local

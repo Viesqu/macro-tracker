@@ -77,6 +77,14 @@
                 <input id="importDataInput" type="file" accept="application/json" hidden />
               </label>
             </div>
+
+            <div id="pdfDropZone" class="pdf-drop-zone">
+              <strong>📄 Analizar dieta en PDF</strong>
+              Arrastra un PDF aquí o <label for="pdfInput">elige archivo</label>
+              <input id="pdfInput" type="file" accept="application/pdf" hidden />
+            </div>
+            <p id="pdfStatus" class="pdf-status" style="display:none"></p>
+            <button id="pdfImportBtn" class="primary" style="display:none">Importar comidas detectadas</button>
           </div>
         </section>
 
@@ -166,7 +174,7 @@
             <input class="food-name" list="foodOptions" type="text" placeholder="Ej. arroz o pollo, siempre en crudo" />
           </div>
         </td>
-        <td data-label="Gramos"><input class="grams" type="number" min="0" step="1" value="100" /></td>
+        <td data-label="Gramos"><input class="grams grams-input" type="number" min="0" step="1" value="100" /></td>
         <td data-label="Proteína /100g"><input class="protein100" type="number" min="0" step="0.1" value="0" /></td>
         <td data-label="Hidratos /100g"><input class="carbs100" type="number" min="0" step="0.1" value="0" /></td>
         <td data-label="Grasas /100g"><input class="fat100" type="number" min="0" step="0.1" value="0" /></td>
@@ -179,6 +187,13 @@
     <datalist id="foodOptions"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.mjs" type="module" id="pdfjs-script"></script>
+    <script>
+      // Expose pdfjs-dist to global scope for non-module usage in app.js
+      import("https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.min.mjs").then(lib => {
+        window["pdfjs-dist/build/pdf"] = lib;
+      }).catch(() => {});
+    </script>
     <script src="./app.js"></script>
   </body>
 </html>

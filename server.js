@@ -120,7 +120,11 @@ function normalizeFoodName(name) {
     'Cerdo magro':           'Cerdo magro (lomo)',
     'Solomillo':             'Solomillo de ternera',
     'Yogur griego':          'Yogur griego 0%',
-    'Skyr':                  'Skyr natural',
+    'Skyr natural':          'Skyr (yogur islandés, alto proteína)',
+    'Skyr':                  'Skyr (yogur islandés, alto proteína)',
+    'Proteína whey':         'Proteína whey (concentrada)',
+    'Whey aislada':          'Proteína whey (aislada)',
+    'Whey isolada':          'Proteína whey (aislada)',
     'Queso fresco batido':   'Queso fresco batido 0%',
     'Whey':                  'Proteína whey',
     'Proteína':              'Proteína whey',
@@ -756,6 +760,32 @@ http.createServer(async (req, res) => {
         : 'Sin IA remota. Alternativas del motor local, coherentes y en crudo.',
       setupHint:   AI_CONFIG.setupHint,
     });
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/analyze-diet') {
+    let body = null;
+    try {
+      body = await readJsonBody(req);
+      const text = String(body?.text || '').slice(0, 12000); // cap at 12k chars
+      if (!text.trim()) return sendJson(res, 400, { error: 'No text provided' });
+
+      if (!AI_CONFIG.enabled) {
+        return sendJson(res, 503, { error: 'AI not configured', meals: [] });
+      }
+
+      const prompt =
+        `Extrae las comidas del siguiente texto de dieta. Devuelve JSON con esta estructura exacta:\n` +
+        `{"meals":[{"name":"Desayuno","foods":[{"name":"Avena","grams":80},{"name":"Claras de huevo","grams":200}]},...]}\n\n` +
+        `REGLA DE PESOS: carnes, pescados, arroz, pasta, legumbres, patata → peso en crudo.\n` +
+        `Productos listos como yogur, pan, whey, aceite, frutos secos → tal cual.\n\n` +
+        `Texto de la dieta:\n${text}`;
+
+      const { parsed } = await requestAiJson(prompt);
+      const meals = Array.isArray(parsed?.meals) ? parsed.meals : [];
+      return sendJson(res, 200, { meals });
+    } catch (err) {
+      return sendJson(res, 500, { error: 'AI parsing failed', meals: [] });
+    }
   }
 
   if (req.method === 'POST' && url.pathname === '/api/suggest-meal-alternatives') {

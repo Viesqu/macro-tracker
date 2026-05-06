@@ -71,18 +71,35 @@ const foodLibrary = {
   "Sardinas en lata":         { protein: 20,   carbs: 0,    fat: 9,    kcal: 165 },
   "Gambas":                   { protein: 20.1, carbs: 0,    fat: 1.7,  kcal: 96  },
   "Mejillones":               { protein: 12,   carbs: 3.7,  fat: 2.2,  kcal: 86  },
+  "Dorada":                   { protein: 19,   carbs: 0,    fat: 4,    kcal: 109 },
+  "Lubina":                   { protein: 18,   carbs: 0,    fat: 3,    kcal: 99  },
+  "Pulpo":                    { protein: 15,   carbs: 1,    fat: 1,    kcal: 73  },
+  "Calamar":                  { protein: 16,   carbs: 2,    fat: 1.7,  kcal: 88  },
   "Huevo entero":             { protein: 12.6, carbs: 0.7,  fat: 10.6, kcal: 143 },
   "Claras de huevo":          { protein: 11,   carbs: 0.7,  fat: 0.2,  kcal: 52  },
-  // Proteínas en polvo y lácteos → TAL CUAL
-  "Proteína whey":            { protein: 80,   carbs: 7,    fat: 6,    kcal: 395 },
-  "Caseína":                  { protein: 80,   carbs: 4,    fat: 2,    kcal: 355 },
+  // Fiambres y embutidos típicos España → TAL CUAL
+  "Jamón serrano":            { protein: 30,   carbs: 0,    fat: 7,    kcal: 184 },
+  "Jamón ibérico":            { protein: 28,   carbs: 0,    fat: 12,   kcal: 220 },
+  "Lomo embuchado":           { protein: 31,   carbs: 0,    fat: 5,    kcal: 173 },
+  "Pechuga de pavo (fiambre)":{ protein: 18,   carbs: 1.5,  fat: 1.5,  kcal: 91  },
+  "Pechuga de pollo (fiambre)":{ protein: 18,  carbs: 2,    fat: 1,    kcal: 89  },
+  // Proteínas en polvo → TAL CUAL
+  "Proteína whey (concentrada)": { protein: 80, carbs: 7,   fat: 6,    kcal: 395 },
+  "Proteína whey (aislada)":     { protein: 92, carbs: 2,   fat: 0.5,  kcal: 380 },
+  "Proteína whey":               { protein: 80, carbs: 7,   fat: 6,    kcal: 395 },
+  "Caseína":                     { protein: 80, carbs: 4,   fat: 2,    kcal: 355 },
+  "Proteína vegetal (guisante)": { protein: 80, carbs: 5,   fat: 2,    kcal: 360 },
+  // Lácteos altos en proteína → TAL CUAL
   "Yogur griego 0%":          { protein: 10,   carbs: 3.6,  fat: 0.4,  kcal: 59  },
   "Yogur griego entero":      { protein: 9,    carbs: 3.6,  fat: 8,    kcal: 120 },
-  "Skyr natural":             { protein: 11,   carbs: 4,    fat: 0.2,  kcal: 63  },
+  "Skyr (yogur islandés, alto proteína)": { protein: 11, carbs: 4, fat: 0.2, kcal: 63 },
+  "Quark desnatado":          { protein: 10,   carbs: 4,    fat: 0.2,  kcal: 57  },
   "Queso fresco batido 0%":   { protein: 8,    carbs: 4,    fat: 0.2,  kcal: 46  },
   "Requesón":                 { protein: 11,   carbs: 3,    fat: 4.3,  kcal: 98  },
   "Queso cottage":            { protein: 12,   carbs: 3.5,  fat: 4.3,  kcal: 103 },
   "Mozzarella":               { protein: 22,   carbs: 2.7,  fat: 17,   kcal: 257 },
+  "Queso manchego":           { protein: 30,   carbs: 0.5,  fat: 35,   kcal: 440 },
+  "Queso burgos":             { protein: 12,   carbs: 2,    fat: 12,   kcal: 165 },
   // Proteínas vegetales
   "Tofu firme":               { protein: 13,   carbs: 1.9,  fat: 8,    kcal: 144 },
   "Tempeh":                   { protein: 20,   carbs: 9,    fat: 11,   kcal: 192 },
@@ -125,6 +142,8 @@ const foodLibrary = {
   "Semillas de lino":         { protein: 18,   carbs: 29,   fat: 42,   kcal: 534 },
   "Semillas de girasol":      { protein: 21,   carbs: 20,   fat: 51,   kcal: 584 },
   "Chocolate negro 85%":      { protein: 11,   carbs: 19,   fat: 46,   kcal: 598 },
+  "Aceitunas":                { protein: 0.8,  carbs: 1.2,  fat: 15,   kcal: 145 },
+  "Atún en aceite (lata)":    { protein: 25,   carbs: 0,    fat: 8,    kcal: 198 },
 
   // ── FRUTAS (tal cual) ────────────────────────────────────────────────────
   "Plátano":                  { protein: 1.1,  carbs: 23,   fat: 0.3,  kcal: 89  },
@@ -162,6 +181,123 @@ const foodLibrary = {
   "Calabacín":                { protein: 1.2,  carbs: 3.4,  fat: 0.2,  kcal: 19  },
   "Acelgas":                  { protein: 1.8,  carbs: 3.7,  fat: 0.2,  kcal: 22  },
   "Col":                      { protein: 1.6,  carbs: 6.2,  fat: 0.2,  kcal: 25  },
+
+  // ── VERDURAS ADICIONALES ─────────────────────────────────────────────────
+  "Espárragos":               { protein: 2.2,  carbs: 3.9,  fat: 0.1,  kcal: 20  },
+  "Champiñones":              { protein: 3.1,  carbs: 3.3,  fat: 0.3,  kcal: 22  },
+  "Judías verdes":            { protein: 1.8,  carbs: 4.3,  fat: 0.2,  kcal: 25  },
+  "Guisantes":                { protein: 5.4,  carbs: 14.5, fat: 0.4,  kcal: 81  },
+  "Rúcula":                   { protein: 2.6,  carbs: 3.7,  fat: 0.7,  kcal: 25  },
+  "Alcachofas":               { protein: 3.3,  carbs: 5,    fat: 0.2,  kcal: 53  },
+  "Remolacha":                { protein: 1.6,  carbs: 9.6,  fat: 0.1,  kcal: 43  },
+  "Puerro":                   { protein: 1.5,  carbs: 14,   fat: 0.3,  kcal: 61  },
+
+  // ── FRUTAS ADICIONALES ───────────────────────────────────────────────────
+  "Arándanos":                { protein: 0.7,  carbs: 14,   fat: 0.3,  kcal: 57  },
+  "Cerezas":                  { protein: 1,    carbs: 13,   fat: 0.2,  kcal: 50  },
+  "Ciruelas":                 { protein: 0.7,  carbs: 11,   fat: 0.3,  kcal: 46  },
+  "Pomelo":                   { protein: 0.8,  carbs: 9,    fat: 0.1,  kcal: 42  },
+
+  // ── PESCADOS ADICIONALES ─────────────────────────────────────────────────
+  "Trucha":                   { protein: 19,   carbs: 0,    fat: 5,    kcal: 121 },
+  "Boquerón":                 { protein: 17,   carbs: 0,    fat: 3,    kcal: 96  },
+  "Sepia":                    { protein: 15,   carbs: 0.5,  fat: 0.7,  kcal: 69  },
+  "Rape":                     { protein: 18,   carbs: 0,    fat: 1.5,  kcal: 82  },
+
+  // ── EMBUTIDOS ADICIONALES ────────────────────────────────────────────────
+  "Chorizo":                  { protein: 22,   carbs: 1,    fat: 38,   kcal: 440 },
+  "Salchichón":               { protein: 22,   carbs: 1,    fat: 36,   kcal: 425 },
+  "Mortadela":                { protein: 13,   carbs: 3,    fat: 28,   kcal: 320 },
+
+  // ── CEREALES ADICIONALES ─────────────────────────────────────────────────
+  "Arroz integral":           { protein: 7.5,  carbs: 76,   fat: 2.2,  kcal: 361 },
+  "Pan de centeno":           { protein: 8.8,  carbs: 48,   fat: 1.7,  kcal: 241 },
+  "Maíz (grano seco)":        { protein: 8.5,  carbs: 74,   fat: 3.9,  kcal: 365 },
+
+  // ── SUPLEMENTOS DEPORTIVOS ───────────────────────────────────────────────
+  // Valores por 100g. Para creatina, se usa en dosis de 5g (≈0 kcal relevantes)
+  "Barrita proteína":         { protein: 20,   carbs: 22,   fat: 7,    kcal: 235 },
+  "Bebida proteica (RTD)":    { protein: 20,   carbs: 5,    fat: 3,    kcal: 130 },
+  "Creatina monohidrato":     { protein: 0,    carbs: 0,    fat: 0,    kcal: 0   },
+
+  // ── OTROS ───────────────────────────────────────────────────────────────
+  "Hummus":                   { protein: 8,    carbs: 14,   fat: 9,    kcal: 166 },
+  "Miel":                     { protein: 0.3,  carbs: 82,   fat: 0,    kcal: 304 },
+  "Aceite de coco":           { protein: 0,    carbs: 0,    fat: 100,  kcal: 900 },
+  "Mantequilla":              { protein: 0.6,  carbs: 0.6,  fat: 82,   kcal: 740 },
+  "Kéfir":                    { protein: 4,    carbs: 4.5,  fat: 3.5,  kcal: 61  },
+  "Leche de soja":            { protein: 3.3,  carbs: 3,    fat: 1.8,  kcal: 44  },
+  "Leche de avena":           { protein: 1.2,  carbs: 6,    fat: 1.5,  kcal: 45  },
+  "Soja (grano seco)":        { protein: 36,   carbs: 30,   fat: 20,   kcal: 446 },
+
+  // ── CARNES ADICIONALES ───────────────────────────────────────────────────
+  "Conejo":                   { protein: 21,   carbs: 0,    fat: 4,    kcal: 114 },
+  "Cordero (pierna)":         { protein: 18,   carbs: 0,    fat: 13,   kcal: 192 },
+  "Pato":                     { protein: 18,   carbs: 0,    fat: 15,   kcal: 201 },
+  "Ternera (carne picada magra)": { protein: 21, carbs: 0,  fat: 7,    kcal: 151 },
+  "Buey (solomillo)":         { protein: 22,   carbs: 0,    fat: 4,    kcal: 125 },
+  "Pollo (muslo sin piel)":   { protein: 21,   carbs: 0,    fat: 5,    kcal: 133 },
+
+  // ── PESCADOS ADICIONALES ─────────────────────────────────────────────────
+  "Lenguado":                 { protein: 17,   carbs: 0,    fat: 2,    kcal: 85  },
+  "Fletán":                   { protein: 18,   carbs: 0,    fat: 5,    kcal: 116 },
+  "Tilapia":                  { protein: 20,   carbs: 0,    fat: 3,    kcal: 111 },
+  "Langostinos":              { protein: 18,   carbs: 0.5,  fat: 1,    kcal: 82  },
+  "Almejas":                  { protein: 14,   carbs: 3.5,  fat: 2,    kcal: 90  },
+  "Berberechos":              { protein: 14,   carbs: 3,    fat: 1.5,  kcal: 82  },
+
+  // ── LEGUMBRES ADICIONALES ────────────────────────────────────────────────
+  "Judías blancas (secas)":   { protein: 22,   carbs: 61,   fat: 1,    kcal: 340 },
+  "Habas (secas)":            { protein: 26,   carbs: 58,   fat: 1.5,  kcal: 341 },
+  "Azukis (secas)":           { protein: 20,   carbs: 63,   fat: 0.5,  kcal: 329 },
+
+  // ── CEREALES Y PAN ADICIONALES ───────────────────────────────────────────
+  "Trigo sarraceno":          { protein: 13,   carbs: 72,   fat: 3,    kcal: 355 },
+  "Espelta (grano)":          { protein: 15,   carbs: 68,   fat: 2,    kcal: 338 },
+  "Bulgur":                   { protein: 12,   carbs: 76,   fat: 1.3,  kcal: 360 },
+  "Mijo":                     { protein: 11,   carbs: 73,   fat: 4,    kcal: 378 },
+  "Polenta (maíz harina)":    { protein: 8,    carbs: 74,   fat: 3.4,  kcal: 362 },
+  "Pan de molde integral":    { protein: 9,    carbs: 41,   fat: 4,    kcal: 234 },
+  "Pan de pita":              { protein: 9,    carbs: 54,   fat: 1.5,  kcal: 265 },
+  "Wraps de trigo":           { protein: 8,    carbs: 52,   fat: 7,    kcal: 310 },
+  "Biscotes":                 { protein: 9,    carbs: 77,   fat: 2.5,  kcal: 390 },
+  "Nachos / chips de maíz":   { protein: 8,    carbs: 77,   fat: 7,    kcal: 415 },
+
+  // ── LÁCTEOS ADICIONALES ──────────────────────────────────────────────────
+  "Yogur natural":            { protein: 3.5,  carbs: 4.5,  fat: 3,    kcal: 58  },
+  "Yogur natural desnatado":  { protein: 3.8,  carbs: 5,    fat: 0.2,  kcal: 36  },
+  "Kéfir desnatado":          { protein: 4.2,  carbs: 4.6,  fat: 0.5,  kcal: 40  },
+  "Leche de coco (lata)":     { protein: 2,    carbs: 6,    fat: 24,   kcal: 230 },
+
+  // ── FRUTOS SECOS Y GRASAS ADICIONALES ───────────────────────────────────
+  "Pistachos":                { protein: 20,   carbs: 28,   fat: 45,   kcal: 562 },
+  "Avellanas":                { protein: 15,   carbs: 17,   fat: 61,   kcal: 628 },
+  "Macadamia":                { protein: 8,    carbs: 14,   fat: 76,   kcal: 718 },
+  "Nueces de Brasil":         { protein: 14,   carbs: 12,   fat: 66,   kcal: 659 },
+  "Tahini (pasta de sésamo)": { protein: 17,   carbs: 26,   fat: 54,   kcal: 595 },
+  "Coco rallado (seco)":      { protein: 6,    carbs: 15,   fat: 64,   kcal: 660 },
+  "Aceite de girasol":        { protein: 0,    carbs: 0,    fat: 100,  kcal: 900 },
+  "Mantequilla de cacahuete (sin azúcar)": { protein: 24, carbs: 20, fat: 50, kcal: 600 },
+
+  // ── SUPLEMENTOS ADICIONALES ──────────────────────────────────────────────
+  "Proteína de arroz":        { protein: 80,   carbs: 12,   fat: 3,    kcal: 395 },
+  "Proteína de soja aislada": { protein: 90,   carbs: 3,    fat: 1,    kcal: 375 },
+  "Maltodextrina":            { protein: 0,    carbs: 100,  fat: 0,    kcal: 390 },
+  "Dextrina de maíz":         { protein: 0,    carbs: 100,  fat: 0,    kcal: 390 },
+  "Proteína en polvo (vegana)": { protein: 75, carbs: 8,    fat: 4,    kcal: 370 },
+  "Snack proteico (tipo Grenade)": { protein: 21, carbs: 15, fat: 8,   kcal: 213 },
+
+  // ── FRUTAS ADICIONALES ───────────────────────────────────────────────────
+  "Higos":                    { protein: 0.8,  carbs: 19,   fat: 0.3,  kcal: 74  },
+  "Dátiles":                  { protein: 2.2,  carbs: 75,   fat: 0.4,  kcal: 277 },
+  "Papaya":                   { protein: 0.5,  carbs: 10,   fat: 0.1,  kcal: 43  },
+  "Maracuyá":                 { protein: 2.2,  carbs: 23,   fat: 0.7,  kcal: 97  },
+
+  // ── CONDIMENTOS Y EXTRAS ─────────────────────────────────────────────────
+  "Salsa de soja (baja sal)": { protein: 10,   carbs: 7,    fat: 0.1,  kcal: 60  },
+  "Mostaza":                  { protein: 4,    carbs: 3,    fat: 4,    kcal: 66  },
+  "Vinagre de manzana":       { protein: 0,    carbs: 1,    fat: 0,    kcal: 22  },
+  "Caldo de pollo (casero)":  { protein: 3,    carbs: 0.5,  fat: 0.5,  kcal: 20  },
 };
 
 const RAW_GUIDANCE = "Regla cerrada: carne, pollo, pescado, huevo, arroz, pasta, legumbres, patata y boniato se apuntan en crudo. Van tal cual los productos listos para consumir: yogur, skyr, queso, pan, aceite, whey, frutos secos, tortillas hechas.";
@@ -404,6 +540,106 @@ function buildClientFallbackSuggestions(meal) {
   return results;
 }
 
+// ─── MOTOR DE SUGERENCIAS EN COLUMNAS ─────────────────────────────────────────
+// Genera 5 alternativas por grupo macro (proteína / hidrato / grasa) de forma
+// independiente. El usuario puede aplicar cada alternativa individual al instante.
+
+function buildColumnSuggestions(meal) {
+  const foods = (meal.foods || [])
+    .map(f => ({ ...f, name: normalizeFoodName(f.name) }))
+    .filter(f => f.name && Number(f.grams || 0) > 0);
+
+  if (!foods.length) return { type: "columns", columns: [] };
+
+  const libraryEntries = Object.entries(foodLibrary);
+
+  // Classify each food
+  const classified = foods.map(food => ({ food, profile: localGetFoodProfile(food) }));
+
+  // Group by macro category
+  const groupMap = { proteina: [], carbohidrato: [], grasa: [] };
+  classified.forEach(({ food, profile }) => {
+    if (groupMap[profile.group]) groupMap[profile.group].push({ food, profile });
+  });
+
+  const groupOrder  = ["proteina", "carbohidrato", "grasa"];
+  const groupLabels = { proteina: "Proteína", carbohidrato: "Hidratos", grasa: "Grasas" };
+  const groupColors = { proteina: "protein", carbohidrato: "carbs", grasa: "fat" };
+
+  const columns = [];
+
+  for (const group of groupOrder) {
+    const items = groupMap[group];
+    if (!items || !items.length) continue;
+
+    // Pick main food (highest kcal contribution)
+    const mainItem = [...items].sort((a, b) => {
+      const aKcal = (a.food.kcal || 0) * (a.food.grams || 100) / 100;
+      const bKcal = (b.food.kcal || 0) * (b.food.grams || 100) / 100;
+      return bKcal - aKcal;
+    })[0];
+
+    const baseFood    = mainItem.food;
+    const baseProfile = mainItem.profile;
+
+    // Find top 5 alternatives
+    const alternatives = libraryEntries
+      .map(([name, macros]) => {
+        const food    = { name, ...macros };
+        const profile = localGetFoodProfile(food);
+        return { food, profile, score: localScoreReplacement(baseFood, baseProfile, food, profile) };
+      })
+      .filter(({ food, profile }) => {
+        if (food.name === baseFood.name) return false;
+        if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
+        if (baseProfile.isDairy)         return profile.isDairy;
+        if (baseProfile.isEgg)           return profile.isEgg || (profile.isDairy && food.protein >= 8);
+        if (baseProfile.isLegume)        return profile.isLegume;
+        if (baseProfile.isFruit)         return profile.isFruit;
+        if (baseProfile.isVegetable)     return profile.isVegetable;
+        if (group === "grasa")           return profile.group === "grasa";
+        if (group === "proteina")        return profile.group === "proteina" && !profile.isDairy && !profile.isEgg;
+        if (group === "carbohidrato")    return profile.group === "carbohidrato";
+        return profile.group === group;
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(({ food }) => {
+        const grams  = localScaleGrams(baseFood, food);
+        const factor = grams / 100;
+        return {
+          name:    food.name,
+          grams,
+          protein: round((food.protein || 0) * factor),
+          carbs:   round((food.carbs   || 0) * factor),
+          fat:     round((food.fat     || 0) * factor),
+          kcal:    round((food.kcal    || 0) * factor),
+          per100:  { protein: food.protein, carbs: food.carbs, fat: food.fat, kcal: food.kcal },
+        };
+      });
+
+    if (!alternatives.length) continue;
+
+    const factor = baseFood.grams / 100;
+    columns.push({
+      group,
+      label:          groupLabels[group],
+      color:          groupColors[group],
+      originalFoodId: baseFood.id,
+      originalFood: {
+        ...baseFood,
+        totalKcal:    round((baseFood.kcal    || 0) * factor),
+        totalProtein: round((baseFood.protein || 0) * factor),
+        totalCarbs:   round((baseFood.carbs   || 0) * factor),
+        totalFat:     round((baseFood.fat     || 0) * factor),
+      },
+      alternatives,
+    });
+  }
+
+  return { type: "columns", columns };
+}
+
 // ─── ESTADO Y FUNCIONES CORE ───────────────────────────────────────────────────
 
 const defaultState = {
@@ -473,7 +709,11 @@ function normalizeFoodName(name) {
     "Cerdo magro":             "Cerdo magro (lomo)",
     "Solomillo":               "Solomillo de ternera",
     "Yogur griego":            "Yogur griego 0%",
-    "Skyr":                    "Skyr natural",
+    "Skyr natural":            "Skyr (yogur islandés, alto proteína)",
+    "Skyr":                    "Skyr (yogur islandés, alto proteína)",
+    "Proteína whey":           "Proteína whey (concentrada)",
+    "Whey aislada":            "Proteína whey (aislada)",
+    "Whey isolada":            "Proteína whey (aislada)",
     "Queso fresco batido":     "Queso fresco batido 0%",
     "Whey":                    "Proteína whey",
     "Proteína":                "Proteína whey",
@@ -674,6 +914,152 @@ async function loadAiAvailability() {
   render();
 }
 
+// ─── AUTOCOMPLETE DE ALIMENTOS ────────────────────────────────────────────────
+// Dropdown flotante con búsqueda en tiempo real, highlight del texto coincidente,
+// navegación por teclado y clic para seleccionar. Se cierra al scrollar o redimensionar.
+
+function setupFoodAutocomplete(input, food, meal, refs) {
+  input.removeAttribute("list");
+  input.setAttribute("autocomplete", "off");
+  input.setAttribute("spellcheck", "false");
+
+  let dropdown = null;
+  let activeIdx = -1;
+
+  function getMatches(q) {
+    const query = q.trim().toLowerCase();
+    if (query.length < 1) return [];
+    return Object.entries(foodLibrary)
+      .filter(([name]) => name.toLowerCase().includes(query))
+      .sort((a, b) => {
+        const an = a[0].toLowerCase(), bn = b[0].toLowerCase();
+        // Exact match first, then starts-with, then alphabetical
+        if (an === query)  return -1;
+        if (bn === query)  return  1;
+        const as = an.startsWith(query) ? 0 : 1;
+        const bs = bn.startsWith(query) ? 0 : 1;
+        return as !== bs ? as - bs : an.localeCompare(bn, "es");
+      })
+      .slice(0, 10);
+  }
+
+  function markMatch(text, query) {
+    const q = query.trim().toLowerCase();
+    const idx = text.toLowerCase().indexOf(q);
+    if (idx < 0 || !q) return escapeHtml(text);
+    return (
+      escapeHtml(text.slice(0, idx)) +
+      `<strong class="dd-match">${escapeHtml(text.slice(idx, idx + q.length))}</strong>` +
+      escapeHtml(text.slice(idx + q.length))
+    );
+  }
+
+  function position() {
+    if (!dropdown) return;
+    const r = input.getBoundingClientRect();
+    dropdown.style.top   = `${r.bottom + window.scrollY + 4}px`;
+    dropdown.style.left  = `${r.left   + window.scrollX}px`;
+    dropdown.style.width = `${Math.max(r.width, 260)}px`;
+  }
+
+  function closeDropdown() {
+    window.removeEventListener("scroll", closeDropdown, true);
+    window.removeEventListener("resize", closeDropdown);
+    if (dropdown) { dropdown.remove(); dropdown = null; }
+    activeIdx = -1;
+  }
+
+  function openDropdown(matches) {
+    closeDropdown();
+    if (!matches.length) return;
+
+    dropdown = document.createElement("div");
+    dropdown.className = "food-dropdown";
+    dropdown.setAttribute("role", "listbox");
+    dropdown.innerHTML = matches.map(([name, m], i) => `
+      <div class="food-dd-item" role="option" data-name="${escapeHtml(name)}" data-idx="${i}">
+        <span class="fdi-name">${markMatch(name, input.value)}</span>
+        <span class="fdi-chips">
+          <span class="sug-m p">P${m.protein}</span>
+          <span class="sug-m c">HC${m.carbs}</span>
+          <span class="sug-m f">G${m.fat}</span>
+          <span class="sug-m k">${m.kcal}kcal</span>
+        </span>
+      </div>
+    `).join("");
+
+    dropdown.addEventListener("mousedown", (e) => {
+      const item = e.target.closest(".food-dd-item");
+      if (item) { e.preventDefault(); applyFood(item.dataset.name); }
+    });
+
+    document.body.appendChild(dropdown);
+    position();
+
+    window.addEventListener("scroll", closeDropdown, { capture: true, once: true });
+    window.addEventListener("resize", closeDropdown, { once: true });
+  }
+
+  function setActive(idx) {
+    if (!dropdown) return;
+    const items = dropdown.querySelectorAll(".food-dd-item");
+    items.forEach((el, i) => el.classList.toggle("active", i === idx));
+    if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: "nearest" });
+    activeIdx = idx;
+  }
+
+  function applyFood(name) {
+    const normalized = normalizeFoodName(name);
+    food.name    = normalized;
+    input.value  = normalized;
+    const preset = foodLibrary[normalized];
+    if (preset) {
+      food.protein = preset.protein; food.carbs = preset.carbs;
+      food.fat     = preset.fat;     food.kcal  = preset.kcal;
+      if (refs) {
+        refs.protein.value = preset.protein; refs.carbs.value = preset.carbs;
+        refs.fat.value     = preset.fat;     refs.kcal.value  = preset.kcal;
+        updateFoodTotal(refs.total, food);
+        if (refs.meta) updateMealUi(meal, refs.meta, refs.summary, refs.spotlight, refs.kcalValue, refs.macroBars);
+        renderSummary();
+      }
+    }
+    closeDropdown();
+    clearSuggestionsForMeal(meal.id);
+    persistStateOnly();
+  }
+
+  input.addEventListener("input",  () => openDropdown(getMatches(input.value)));
+  input.addEventListener("focus",  () => { if (input.value) openDropdown(getMatches(input.value)); });
+  input.addEventListener("blur",   () => {
+    setTimeout(() => {
+      const q        = input.value.trim();
+      const resolved = normalizeFoodName(q);
+      const preset   = foodLibrary[resolved];
+      if (preset && food.name !== resolved) applyFood(resolved);
+      else { food.name = q || food.name; persistStateOnly(); }
+      closeDropdown();
+    }, 200);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (!dropdown) return;
+    const items = dropdown.querySelectorAll(".food-dd-item");
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActive(Math.min(activeIdx + 1, items.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActive(Math.max(activeIdx - 1, 0));
+    } else if ((e.key === "Enter") && activeIdx >= 0 && items[activeIdx]) {
+      e.preventDefault();
+      applyFood(items[activeIdx].dataset.name);
+    } else if (e.key === "Escape") {
+      closeDropdown();
+    }
+  });
+}
+
 // ─── RENDER ────────────────────────────────────────────────────────────────────
 
 function renderFoodOptions() {
@@ -741,6 +1127,9 @@ function renderMeals() {
     const aiResults      = fragment.querySelector(".meal-ai-results");
     const suggestButton  = fragment.querySelector(".suggest-meal-btn");
 
+    // Tag the card with the meal ID so event delegation can find it
+    fragment.querySelector(".meal-card").dataset.mealId = meal.id;
+
     mealIndexBadge.textContent  = getDefaultMealName(index);
     titleInput.value             = meal.name;
     titleInput.placeholder       = `Comida ${index + 1}`;
@@ -795,17 +1184,11 @@ function renderMeals() {
       bindings.fat.value     = food.fat;
       bindings.kcal.value    = food.kcal;
 
-      bindings.name.addEventListener("change", (event) => {
-        food.name = normalizeFoodName(event.target.value);
-        const preset = foodLibrary[food.name];
-        if (preset) {
-          food.protein = preset.protein;
-          food.carbs   = preset.carbs;
-          food.fat     = preset.fat;
-          food.kcal    = preset.kcal;
-        }
-        clearSuggestionsForMeal(meal.id);
-        persistAndRender();
+      // Custom autocomplete replaces native datalist change handler
+      setupFoodAutocomplete(bindings.name, food, meal, {
+        ...bindings,
+        meta: meta, summary: summary, spotlight: spotlight,
+        kcalValue: kcalValue, macroBars: macroBars,
       });
 
       [
@@ -900,6 +1283,12 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
   aiStatus.textContent = entry.note || "";
   aiStage.innerHTML    = buildAiStage(entry);
 
+  if (entry.type === "columns") {
+    renderMealSuggestionsColumns(entry, aiResults);
+    return;
+  }
+
+  // Legacy format: full meal alternatives (from server)
   const banner = entry.banner
     ? `
       <div class="ai-info-banner ${escapeHtml(entry.banner.tone || "info")}">
@@ -913,7 +1302,7 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
     .map((suggestion) => `
       <article class="ai-suggestion-card">
         <div class="ai-suggestion-topline">
-          <span class="ai-suggestion-badge">${escapeHtml(suggestion.fitLabel || "Local")}</span>
+          <span class="ai-suggestion-badge">${escapeHtml(suggestion.fitLabel || "IA")}</span>
           <h3>${escapeHtml(suggestion.name || "Alternativa")}</h3>
         </div>
         <p>${escapeHtml(suggestion.reason || "")}</p>
@@ -935,9 +1324,60 @@ function renderMealSuggestions(mealId, aiBox, aiStatus, aiStage, aiResults) {
   aiResults.innerHTML = banner + (cards || `
     <article class="ai-suggestion-card">
       <h3>Sin propuestas para esta comida</h3>
-      <p>Esta combinación de alimentos no tiene alternativas claras en la biblioteca. Añade al menos una proteína o hidrato principal en crudo para obtener sugerencias útiles.</p>
+      <p>Añade al menos una proteína o hidrato principal en crudo para obtener sugerencias útiles.</p>
     </article>
   `);
+}
+
+function renderMealSuggestionsColumns(entry, aiResults) {
+  const { columns } = entry;
+
+  if (!columns || !columns.length) {
+    aiResults.innerHTML = `
+      <div class="sug-empty">
+        <p>Añade al menos una proteína, un hidrato o una grasa en crudo para ver alternativas.</p>
+      </div>`;
+    return;
+  }
+
+  aiResults.innerHTML = `
+    <div class="sug-columns">
+      ${columns.map(col => `
+        <div class="sug-col" data-group="${escapeHtml(col.group)}">
+          <div class="sug-col-header">
+            <span class="sug-col-label ${escapeHtml(col.color)}">${escapeHtml(col.label)}</span>
+            <span class="sug-col-base">
+              Cambia <strong>${escapeHtml(col.originalFood.name)}</strong>
+              ${round(col.originalFood.grams)}g · ${round(col.originalFood.totalKcal)} kcal
+            </span>
+          </div>
+          <div class="sug-items">
+            ${col.alternatives.map(alt => `
+              <button class="sug-item"
+                data-food-id="${escapeHtml(col.originalFoodId)}"
+                data-alt-name="${escapeHtml(alt.name)}"
+                data-alt-grams="${alt.grams}"
+                data-alt-protein="${alt.per100.protein}"
+                data-alt-carbs="${alt.per100.carbs}"
+                data-alt-fat="${alt.per100.fat}"
+                data-alt-kcal="${alt.per100.kcal}"
+                title="Aplicar: sustituye ${escapeHtml(col.originalFood.name)} por ${escapeHtml(alt.name)}">
+                <div class="sug-item-top">
+                  <span class="sug-item-name">${escapeHtml(alt.name)}</span>
+                  <span class="sug-item-grams">${alt.grams}g</span>
+                </div>
+                <div class="sug-item-macros">
+                  <span class="sug-m p">P${alt.protein}</span>
+                  <span class="sug-m c">HC${alt.carbs}</span>
+                  <span class="sug-m f">G${alt.fat}</span>
+                  <span class="sug-m k">${alt.kcal}kcal</span>
+                </div>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+      `).join("")}
+    </div>`;
 }
 
 function buildAiStage(entry) {
@@ -1005,54 +1445,232 @@ async function requestMealSuggestions(mealId, button, statusNode, resultsNode, b
         : [],
     };
 
-    // Si el servidor devolvió sugerencias vacías, completar con motor local
+    // Si el servidor devolvió sugerencias vacías, completar con motor local (columnas)
     if (!state.aiSuggestions[mealId].suggestions.length) {
-      const localSuggestions = buildClientFallbackSuggestions(meal);
-      if (localSuggestions.length) {
-        state.aiSuggestions[mealId].suggestions = localSuggestions.map(s => ({ ...s, fitLabel: "Local" }));
-        state.aiSuggestions[mealId].banner = {
+      const colData = buildColumnSuggestions(meal);
+      state.aiSuggestions[mealId] = {
+        ...state.aiSuggestions[mealId],
+        ...colData,
+        banner: {
           tone:  "warning",
           title: "Motor local activado",
-          body:  "La respuesta del servidor estaba vacía. Alternativas generadas en local.",
-        };
-      }
+          body:  "La respuesta del servidor estaba vacía. Alternativas por columna generadas en local.",
+        },
+      };
     }
 
     persistAndRender();
   } catch (error) {
     // Determinar si el servidor devolvió sugerencias de respaldo estructuradas
     const serverFallback = Array.isArray(error?.fallbackSuggestions) && error.fallbackSuggestions.length > 0;
-    const localSuggestions = serverFallback
-      ? error.fallbackSuggestions.map(s => ({ ...s, fitLabel: "Plan B" }))
-      : buildClientFallbackSuggestions(meal).map(s => ({ ...s, fitLabel: "Local" }));
-
     const isNetworkError = error instanceof TypeError || error?.name === "AbortError";
     const isRateLimit    = error?.status === 429;
 
     let bannerTitle = "Motor local activo";
-    let bannerBody  = "Alternativas generadas directamente en el navegador. Coherentes y en crudo.";
+    let bannerBody  = "Alternativas por columna generadas en el navegador. En crudo.";
     let bannerTone  = "warning";
 
     if (isNetworkError) {
       bannerTitle = "Sin conexión con el servidor";
-      bannerBody  = "No se ha podido contactar con el servidor de IA. Usando motor local del navegador.";
+      bannerBody  = "No se ha podido contactar con el servidor de IA. Alternativas locales por columna.";
     } else if (isRateLimit) {
-      bannerTitle = "IA saturada — Plan B activado";
-      bannerBody  = "Los modelos gratuitos están al límite. Usando alternativas locales en crudo.";
+      bannerTitle = "IA saturada — motor local";
+      bannerBody  = "Los modelos gratuitos están al límite. Alternativas locales en crudo.";
     } else if (serverFallback) {
       bannerTitle = error?.banner?.title || "Plan B del servidor";
       bannerBody  = error?.banner?.body  || "Alternativas de respaldo en crudo.";
     }
 
+    const colData = buildColumnSuggestions(meal);
     state.aiSuggestions[mealId] = {
       generatedAt: new Date().toISOString(),
-      note:        serverFallback ? (error?.humanMessage || "") : "Alternativas locales generadas en el navegador.",
+      note:        serverFallback ? (error?.humanMessage || "") : "Alternativas en columna generadas en el navegador.",
       banner:      { tone: bannerTone, title: bannerTitle, body: bannerBody },
-      suggestions: localSuggestions,
+      ...colData,
     };
     persistAndRender();
   } finally {
     button.disabled = false;
+  }
+}
+
+// ─── PDF: ANÁLISIS DE DIETA ───────────────────────────────────────────────────
+// Flujo: extraer texto con pdf.js → enviar al servidor (IA) → parsear JSON
+// Si el servidor falla → intentar parseo local básico con regex
+
+async function extractPdfText(file) {
+  const pdfjsLib = window["pdfjs-dist/build/pdf"];
+  if (!pdfjsLib) throw new Error("pdf.js no cargado. Asegúrate de tener conexión.");
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.3.136/build/pdf.worker.min.mjs";
+
+  const arrayBuffer = await file.arrayBuffer();
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+  const pageTexts = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    pageTexts.push(content.items.map((item) => item.str).join(" "));
+  }
+  return pageTexts.join("\n");
+}
+
+async function parseDietViaServer(text) {
+  const controller = new AbortController();
+  const timeout    = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch("/api/analyze-diet", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ text }),
+      signal:  controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`Server ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function parseDietLocally(text) {
+  // Basic regex parser — handles common Spanish diet PDF formats
+  const mealKeywords = /(?:desayuno|almuerzo|comida|merienda|cena|snack|toma\s*\d*|comida\s*\d+)/gi;
+  const gramPattern  = /([^\n,·•\-–]{3,60}?)\s+(\d{1,4})\s*(?:g|gr|gramos?)\b/gi;
+
+  const segments = text.split(mealKeywords);
+  const mealNames = [...text.matchAll(mealKeywords)].map((m) => m[0].trim());
+
+  const meals = [];
+  segments.forEach((segment, i) => {
+    const foods = [];
+    let m;
+    gramPattern.lastIndex = 0;
+    while ((m = gramPattern.exec(segment)) !== null) {
+      const name  = m[1].trim().replace(/^[-·•\s]+/, "");
+      const grams = parseInt(m[2], 10);
+      if (name.length >= 2 && grams > 0 && grams <= 2000) {
+        const normalized = normalizeFoodName(name);
+        const preset     = foodLibrary[normalized] || {};
+        foods.push({
+          id:      uid(),
+          name:    normalized || name,
+          grams,
+          protein: preset.protein || 0,
+          carbs:   preset.carbs   || 0,
+          fat:     preset.fat     || 0,
+          kcal:    preset.kcal    || 0,
+        });
+      }
+    }
+    if (foods.length) {
+      meals.push({
+        id:    uid(),
+        name:  mealNames[i - 1] || `Comida ${meals.length + 1}`,
+        foods,
+      });
+    }
+  });
+
+  // If no meal structure detected, collect all food+gram pairs into one meal
+  if (!meals.length) {
+    const foods = [];
+    let m2;
+    gramPattern.lastIndex = 0;
+    while ((m2 = gramPattern.exec(text)) !== null) {
+      const name  = m2[1].trim().replace(/^[-·•\s]+/, "");
+      const grams = parseInt(m2[2], 10);
+      if (name.length >= 2 && grams > 0 && grams <= 2000) {
+        const normalized = normalizeFoodName(name);
+        const preset     = foodLibrary[normalized] || {};
+        foods.push({
+          id: uid(), name: normalized || name, grams,
+          protein: preset.protein || 0, carbs: preset.carbs || 0,
+          fat: preset.fat || 0,         kcal:  preset.kcal  || 0,
+        });
+      }
+    }
+    if (foods.length) meals.push({ id: uid(), name: "Comida 1 (importada)", foods });
+  }
+
+  return meals;
+}
+
+async function handlePdfUpload(file) {
+  const statusEl = document.getElementById("pdfStatus");
+  const importEl = document.getElementById("pdfImportBtn");
+  let parsedMeals = null;
+
+  function setStatus(msg, tone = "info") {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.className   = `pdf-status ${tone}`;
+    statusEl.style.display = "block";
+  }
+
+  try {
+    setStatus("Extrayendo texto del PDF…");
+    const text = await extractPdfText(file);
+    if (!text || text.trim().length < 20) {
+      setStatus("El PDF no contiene texto legible (puede ser imagen escaneada).", "error");
+      return;
+    }
+
+    setStatus("Analizando estructura de la dieta…");
+    let meals;
+    try {
+      const serverResult = await parseDietViaServer(text);
+      meals = Array.isArray(serverResult.meals) ? serverResult.meals : null;
+    } catch {
+      // Server unavailable — use local parser
+      meals = null;
+    }
+
+    if (!meals || !meals.length) {
+      setStatus("Servidor no disponible. Usando parser local (resultados aproximados)…", "warning");
+      meals = parseDietLocally(text);
+    }
+
+    if (!meals || !meals.length) {
+      setStatus("No se detectaron comidas en el PDF. Prueba con un formato más claro.", "error");
+      return;
+    }
+
+    // Sanitize each meal to match app structure
+    const sanitized = meals.map((meal, i) => ({
+      id:    meal.id    || uid(),
+      name:  meal.name  || `Comida ${i + 1}`,
+      foods: (Array.isArray(meal.foods) ? meal.foods : []).map((f) => {
+        const normalized = normalizeFoodName(f.name || "");
+        const preset     = foodLibrary[normalized] || {};
+        return {
+          id:      f.id      || uid(),
+          name:    normalized || f.name || "Alimento",
+          grams:   Number(f.grams   || 0),
+          protein: Number(f.protein ?? preset.protein ?? 0),
+          carbs:   Number(f.carbs   ?? preset.carbs   ?? 0),
+          fat:     Number(f.fat     ?? preset.fat     ?? 0),
+          kcal:    Number(f.kcal    ?? preset.kcal    ?? 0),
+        };
+      }).filter((f) => f.name && f.grams > 0),
+    })).filter((m) => m.foods.length > 0);
+
+    if (!sanitized.length) {
+      setStatus("Se analizó el PDF pero no se encontraron alimentos con gramos reconocibles.", "error");
+      return;
+    }
+
+    // Store for later import
+    window._pdfParsedMeals = sanitized;
+    setStatus(
+      `${sanitized.length} comida(s) detectadas, ${sanitized.reduce((a, m) => a + m.foods.length, 0)} alimentos. Pulsa "Importar" para añadirlas.`,
+      "success"
+    );
+    if (importEl) importEl.style.display = "inline-flex";
+  } catch (err) {
+    setStatus(`Error: ${err.message || "No se pudo procesar el PDF."}`, "error");
   }
 }
 
@@ -1116,6 +1734,33 @@ function render() {
 
 // ─── EVENTOS GLOBALES ──────────────────────────────────────────────────────────
 
+// Delegation: apply a suggestion column alternative to the meal
+mealsContainer.addEventListener("click", (e) => {
+  const btn = e.target.closest(".sug-item");
+  if (!btn) return;
+
+  const mealCard = btn.closest("[data-meal-id]");
+  if (!mealCard) return;
+
+  const mealId = mealCard.dataset.mealId;
+  const foodId = btn.dataset.foodId;
+  const meal   = state.meals.find((m) => m.id === mealId);
+  if (!meal) return;
+
+  const food = meal.foods.find((f) => f.id === foodId);
+  if (!food) return;
+
+  food.name    = btn.dataset.altName;
+  food.grams   = Number(btn.dataset.altGrams)   || food.grams;
+  food.protein = Number(btn.dataset.altProtein) || 0;
+  food.carbs   = Number(btn.dataset.altCarbs)   || 0;
+  food.fat     = Number(btn.dataset.altFat)     || 0;
+  food.kcal    = Number(btn.dataset.altKcal)    || 0;
+
+  clearSuggestionsForMeal(mealId);
+  persistAndRender();
+});
+
 document.getElementById("addMealBtn").addEventListener("click", () => {
   state.meals.push(createMeal(getDefaultMealName(state.meals.length)));
   persistAndRender();
@@ -1167,6 +1812,44 @@ document.getElementById("copyDaySummaryBtn").addEventListener("click", async () 
 document.getElementById("exportDataBtn").addEventListener("click", () => {
   exportState();
 });
+
+// PDF upload
+const pdfInput = document.getElementById("pdfInput");
+if (pdfInput) {
+  pdfInput.addEventListener("change", async (event) => {
+    const [file] = event.target.files || [];
+    if (!file || file.type !== "application/pdf") return;
+    await handlePdfUpload(file);
+    event.target.value = "";
+  });
+}
+
+const pdfDropZone = document.getElementById("pdfDropZone");
+if (pdfDropZone) {
+  pdfDropZone.addEventListener("dragover", (e) => { e.preventDefault(); pdfDropZone.classList.add("drag-over"); });
+  pdfDropZone.addEventListener("dragleave", () => pdfDropZone.classList.remove("drag-over"));
+  pdfDropZone.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    pdfDropZone.classList.remove("drag-over");
+    const file = [...(e.dataTransfer.files || [])].find((f) => f.type === "application/pdf");
+    if (file) await handlePdfUpload(file);
+  });
+}
+
+const pdfImportBtn = document.getElementById("pdfImportBtn");
+if (pdfImportBtn) {
+  pdfImportBtn.addEventListener("click", () => {
+    const meals = window._pdfParsedMeals;
+    if (!meals || !meals.length) return;
+    state.meals.push(...meals);
+    window._pdfParsedMeals = null;
+    pdfImportBtn.style.display = "none";
+    const statusEl = document.getElementById("pdfStatus");
+    if (statusEl) statusEl.style.display = "none";
+    persistAndRender();
+    alert(`${meals.length} comida(s) importada(s). Revisa y edita los valores en crudo.`);
+  });
+}
 
 document.getElementById("importDataInput").addEventListener("change", async (event) => {
   const [file] = event.target.files || [];

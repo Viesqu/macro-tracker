@@ -46,9 +46,9 @@ button, input, select { font: inherit; }
 button, .file-button {
   border: 1px solid transparent;
   border-radius: 14px;
-  padding: 0.8rem 1rem;
+  padding: 0.7rem 0.95rem;
   cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
 }
 button:hover, .file-button:hover {
   transform: translateY(-1px);
@@ -119,10 +119,14 @@ input:focus, select:focus {
 }
 .hero-actions, .inline-actions, .meal-actions, .controls-stack {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 .hero-actions { margin-top: 22px; }
+.meal-actions {
+  flex-shrink: 0;
+  align-items: flex-start;
+}
 .hero-highlights {
   margin-top: 18px;
   display: grid;
@@ -300,44 +304,50 @@ input:focus, select:focus {
 
 .meals-grid {
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
-.meal-card { padding: 20px; }
+.meal-card { padding: 18px 20px; }
 .meal-header {
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   align-items: flex-start;
   margin-bottom: 14px;
 }
-.meal-heading { min-width: 0; }
+.meal-heading { min-width: 0; flex: 1; }
 .meal-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .meal-index-badge {
   border-radius: 999px;
-  padding: 0.45rem 0.7rem;
+  padding: 0.38rem 0.65rem;
   background: rgba(79, 70, 229, 0.08);
   color: var(--primary);
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .meal-title {
   padding: 0;
   border: none;
   background: transparent;
   min-height: auto;
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.03em;
+  width: auto;
+  min-width: 120px;
+  max-width: 280px;
 }
-.meal-title:focus { box-shadow: none; }
+.meal-title:focus { box-shadow: none; outline: 2px solid rgba(79, 70, 229, 0.25); border-radius: 8px; }
 .meal-meta {
-  margin: 8px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
+  font-size: 0.88rem;
 }
 .table-wrap {
   border: 1px solid var(--line);
@@ -587,6 +597,196 @@ input:focus, select:focus {
 }
 .hidden { display: none; }
 
+/* ── SUGGESTION COLUMNS ─────────────────────────────────────────────────────── */
+.sug-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+.sug-col {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.sug-col[data-group="proteina"] { border-color: rgba(37, 99, 235, 0.18); }
+.sug-col[data-group="carbohidrato"] { border-color: rgba(249, 115, 22, 0.18); }
+.sug-col[data-group="grasa"] { border-color: rgba(20, 184, 166, 0.18); }
+
+.sug-col-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+}
+.sug-col-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.sug-col-label.protein { color: var(--protein); }
+.sug-col-label.carbs   { color: var(--carbs); }
+.sug-col-label.fat     { color: var(--fat); }
+
+.sug-col-base {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.sug-col-base strong { color: var(--text); font-weight: 700; }
+
+.sug-items {
+  display: grid;
+}
+.sug-item {
+  display: grid;
+  gap: 5px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.sug-item:last-child { border-bottom: none; }
+.sug-item:hover { background: rgba(79, 70, 229, 0.04); }
+.sug-item:active { background: rgba(79, 70, 229, 0.08); }
+
+.sug-item-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sug-item-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+.sug-item-grams {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--primary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sug-item-macros {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sug-m {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sug-m.p { background: rgba(37, 99, 235, 0.08);  color: var(--protein); }
+.sug-m.c { background: rgba(249, 115, 22, 0.08); color: var(--carbs); }
+.sug-m.f { background: rgba(20, 184, 166, 0.08); color: var(--fat); }
+.sug-m.k { background: rgba(79, 70, 229, 0.08);  color: var(--primary); }
+
+.sug-empty {
+  padding: 20px;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+/* ── FOOD AUTOCOMPLETE DROPDOWN ─────────────────────────────────────────────── */
+.food-dropdown {
+  position: absolute;
+  z-index: 9999;
+  background: white;
+  border: 1px solid var(--line-strong);
+  border-radius: 18px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.food-dd-item {
+  display: grid;
+  gap: 5px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  transition: background 0.1s ease;
+  user-select: none;
+}
+.food-dd-item:last-child { border-bottom: none; }
+.food-dd-item:hover, .food-dd-item.active {
+  background: rgba(79, 70, 229, 0.07);
+}
+.fdi-name {
+  font-size: 0.91rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+.fdi-name .dd-match, .fdi-name strong { font-weight: 800; color: var(--primary); }
+.fdi-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* ── FOOD TABLE COMPACT ─────────────────────────────────────────────────────── */
+.grams-input {
+  font-weight: 800;
+  font-size: 1rem;
+  text-align: center;
+  color: var(--primary);
+}
+.foods-table td input {
+  min-height: 38px;
+  padding: 0.52rem 0.65rem;
+}
+.food-name-cell {
+  position: relative;
+}
+.food-name {
+  font-weight: 600;
+}
+
+/* ── PDF UPLOAD ──────────────────────────────────────────────────────────────── */
+.pdf-drop-zone {
+  border: 2px dashed rgba(79, 70, 229, 0.3);
+  border-radius: 18px;
+  padding: 18px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(79, 70, 229, 0.03);
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.pdf-drop-zone:hover, .pdf-drop-zone.drag-over {
+  border-color: var(--primary);
+  background: rgba(79, 70, 229, 0.07);
+  color: var(--primary);
+}
+.pdf-drop-zone strong { display: block; color: var(--text); margin-bottom: 4px; font-size: 0.95rem; }
+.pdf-drop-zone label { cursor: pointer; color: var(--primary); font-weight: 700; display: inline; }
+.pdf-status {
+  display: none;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.pdf-status.info    { background: var(--ai-soft);      color: var(--ai);     }
+.pdf-status.success { background: var(--success-soft); color: var(--success);}
+.pdf-status.warning { background: var(--warning-soft); color: var(--warning);}
+.pdf-status.error   { background: var(--danger-soft);  color: var(--danger); }
+
 label {
   display: grid;
   gap: 8px;
@@ -645,4 +845,5 @@ label {
   .ai-stage-card { grid-template-columns: auto 1fr; }
   .ai-stage-time { grid-column: 2; }
   .meal-ai-results { grid-template-columns: 1fr; }
+  .sug-columns { grid-template-columns: 1fr; }
 }

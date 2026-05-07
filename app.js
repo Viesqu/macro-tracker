@@ -334,6 +334,221 @@ const HEALTHY_FATS = new Set([
 function isIndulgent(name)   { return INDULGENT_FOODS.has(name); }
 function isHealthyFat(name)  { return HEALTHY_FATS.has(name); }
 
+// ─── FAMILIAS DE ALIMENTOS ────────────────────────────────────────────────────
+// Sistema de categorización fina por uso dietético. Determina qué se puede
+// intercambiar con qué desde el punto de vista nutricional, NO solo macros.
+// Reemplaza la lógica anterior basada solo en isDairy/isEgg/isLegume.
+
+const FOOD_FAMILY = {
+  // Carnes magras (poca grasa, alta proteína)
+  "Pechuga de pollo": "carne_magra",       "Pechuga de pavo": "carne_magra",
+  "Pavo": "carne_magra",                    "Ternera magra": "carne_magra",
+  "Solomillo de ternera": "carne_magra",   "Cerdo magro (lomo)": "carne_magra",
+  "Solomillo de cerdo": "carne_magra",     "Conejo": "carne_magra",
+  "Ternera (carne picada magra)": "carne_magra",
+  "Buey (solomillo)": "carne_magra",       "Pollo (muslo sin piel)": "carne_magra",
+  // Carnes con más grasa
+  "Contramuslo de pollo": "carne_grasa",   "Pollo entero": "carne_grasa",
+  "Carne picada de ternera": "carne_grasa","Cordero (pierna)": "carne_grasa",
+  "Pato": "carne_grasa",
+  // Pescado blanco (magro)
+  "Merluza": "pescado_blanco",   "Bacalao": "pescado_blanco",
+  "Dorada": "pescado_blanco",     "Lubina": "pescado_blanco",
+  "Lenguado": "pescado_blanco",   "Fletán": "pescado_blanco",
+  "Tilapia": "pescado_blanco",    "Rape": "pescado_blanco",
+  // Pescado azul (omega 3, más grasa saludable)
+  "Salmón": "pescado_azul",        "Atún fresco": "pescado_azul",
+  "Caballa": "pescado_azul",       "Sardinas en lata": "pescado_azul",
+  "Atún al natural (lata)": "pescado_azul", "Trucha": "pescado_azul",
+  "Boquerón": "pescado_azul",
+  "Atún en aceite (lata)": "pescado_azul",
+  // Marisco
+  "Gambas": "marisco",       "Mejillones": "marisco",
+  "Pulpo": "marisco",         "Calamar": "marisco",
+  "Sepia": "marisco",         "Langostinos": "marisco",
+  "Almejas": "marisco",       "Berberechos": "marisco",
+  // Huevos
+  "Huevo entero": "huevo_entero",
+  "Claras de huevo": "huevo_clara",
+  // Fiambres magros
+  "Jamón serrano": "fiambre_magro",         "Jamón ibérico": "fiambre_magro",
+  "Lomo embuchado": "fiambre_magro",
+  "Pechuga de pavo (fiambre)": "fiambre_magro",
+  "Pechuga de pollo (fiambre)": "fiambre_magro",
+  // Embutidos grasos (indulgentes)
+  "Chorizo": "embutido_graso",  "Salchichón": "embutido_graso",
+  "Mortadela": "embutido_graso",
+  // Proteína en polvo (no se mezcla con comidas reales)
+  "Proteína whey (concentrada)": "proteina_polvo",
+  "Proteína whey (aislada)": "proteina_polvo",
+  "Proteína whey": "proteina_polvo",
+  "Caseína": "proteina_polvo",
+  "Proteína vegetal (guisante)": "proteina_polvo",
+  "Proteína de arroz": "proteina_polvo",
+  "Proteína de soja aislada": "proteina_polvo",
+  "Proteína en polvo (vegana)": "proteina_polvo",
+  // Lácteos altos en proteína
+  "Yogur griego 0%": "lacteo_proteico",        "Yogur griego entero": "lacteo_proteico",
+  "Skyr (yogur islandés, alto proteína)": "lacteo_proteico",
+  "Quark desnatado": "lacteo_proteico",
+  "Queso fresco batido 0%": "lacteo_proteico",
+  "Requesón": "lacteo_proteico",  "Queso cottage": "lacteo_proteico",
+  "Yogur natural": "lacteo_proteico",
+  "Yogur natural desnatado": "lacteo_proteico",
+  "Kéfir": "lacteo_proteico",  "Kéfir desnatado": "lacteo_proteico",
+  // Quesos curados (mucha grasa, raramente intercambian con magros)
+  "Mozzarella": "queso", "Queso manchego": "queso", "Queso burgos": "queso",
+  // Proteína vegetal entera
+  "Tofu firme": "proteina_vegetal",  "Tempeh": "proteina_vegetal",
+  "Seitán": "proteina_vegetal",       "Edamame": "proteina_vegetal",
+  // Cereales en grano (neutros)
+  "Arroz": "grano_neutro",          "Arroz basmati": "grano_neutro",
+  "Arroz jazmín": "grano_neutro",   "Pasta seca": "grano_neutro",
+  "Crema de arroz": "grano_neutro", "Cuscús": "grano_neutro",
+  "Polenta (maíz harina)": "grano_neutro",
+  "Maíz (grano seco)": "grano_neutro",
+  // Cereales integrales
+  "Arroz integral": "grano_integral",  "Pasta integral seca": "grano_integral",
+  "Avena": "grano_integral",            "Bulgur": "grano_integral",
+  // Pseudocereales
+  "Quinoa": "pseudocereal", "Trigo sarraceno": "pseudocereal",
+  "Espelta (grano)": "pseudocereal", "Mijo": "pseudocereal",
+  // Tubérculos
+  "Patata": "tuberculo", "Boniato": "tuberculo",
+  // Legumbres
+  "Garbanzos secos": "legumbre",  "Lentejas secas": "legumbre",
+  "Alubias secas": "legumbre",     "Judías blancas (secas)": "legumbre",
+  "Habas (secas)": "legumbre",      "Azukis (secas)": "legumbre",
+  "Soja (grano seco)": "legumbre",  "Hummus": "legumbre",
+  // Pan
+  "Pan integral": "pan_integral",   "Pan de centeno": "pan_integral",
+  "Pan de molde integral": "pan_integral",
+  "Pan blanco": "pan_blanco",       "Pan de pita": "pan_blanco",
+  "Wraps de trigo": "pan_blanco",   "Tortilla de trigo": "pan_blanco",
+  "Tortilla de maíz": "pan_blanco", "Biscotes": "pan_blanco",
+  "Tortitas de arroz": "tortita",   "Copos de maíz": "pan_blanco",
+  "Nachos / chips de maíz": "snack_salado",
+  // Frutas
+  "Plátano": "fruta", "Manzana": "fruta", "Pera": "fruta", "Naranja": "fruta",
+  "Mandarina": "fruta", "Kiwi": "fruta", "Fresas": "fruta", "Frutos rojos": "fruta",
+  "Piña": "fruta", "Mango": "fruta", "Melocotón": "fruta", "Uvas": "fruta",
+  "Sandía": "fruta", "Melón": "fruta", "Arándanos": "fruta", "Cerezas": "fruta",
+  "Ciruelas": "fruta", "Pomelo": "fruta", "Higos": "fruta", "Dátiles": "fruta",
+  "Papaya": "fruta", "Maracuyá": "fruta",
+  // Verduras
+  "Brócoli": "verdura", "Espinacas": "verdura", "Pepino": "verdura",
+  "Tomate": "verdura", "Lechuga": "verdura", "Zanahoria": "verdura",
+  "Pimiento rojo": "verdura", "Pimiento verde": "verdura", "Cebolla": "verdura",
+  "Coliflor": "verdura", "Berenjena": "verdura", "Calabacín": "verdura",
+  "Acelgas": "verdura", "Col": "verdura", "Espárragos": "verdura",
+  "Champiñones": "verdura", "Judías verdes": "verdura", "Guisantes": "verdura",
+  "Rúcula": "verdura", "Alcachofas": "verdura", "Remolacha": "verdura",
+  "Puerro": "verdura",
+  // Aceites
+  "Aceite de oliva": "aceite_saludable",
+  "Aceite de coco": "aceite_saturado",
+  "Aceite de girasol": "aceite_refinado",
+  // Frutos secos
+  "Almendras": "fruto_seco", "Nueces": "fruto_seco", "Anacardos": "fruto_seco",
+  "Cacahuetes": "fruto_seco", "Pistachos": "fruto_seco", "Avellanas": "fruto_seco",
+  "Macadamia": "fruto_seco", "Nueces de Brasil": "fruto_seco",
+  "Coco rallado (seco)": "fruto_seco",
+  // Cremas oleaginosas
+  "Crema de cacahuete": "crema_oleaginosa",
+  "Mantequilla de almendra": "crema_oleaginosa",
+  "Mantequilla de cacahuete (sin azúcar)": "crema_oleaginosa",
+  "Tahini (pasta de sésamo)": "crema_oleaginosa",
+  // Aguacate y aceitunas
+  "Aguacate": "aguacate", "Aceitunas": "aguacate",
+  // Semillas
+  "Semillas de chía": "semilla", "Semillas de lino": "semilla",
+  "Semillas de girasol": "semilla",
+  // Grasas animales / saturadas
+  "Mantequilla": "grasa_saturada",
+  "Chocolate negro 85%": "chocolate",
+  // Endulzantes / azúcar
+  "Miel": "endulzante", "Azúcar": "endulzante",
+  // Lácteos líquidos
+  "Leche entera": "lacteo_liquido",      "Leche semidesnatada": "lacteo_liquido",
+  "Leche desnatada": "lacteo_liquido",
+  "Leche de coco (lata)": "bebida_vegetal",
+  "Leche de soja": "bebida_vegetal",      "Leche de avena": "bebida_vegetal",
+  // Suplementos
+  "Creatina monohidrato": "suplemento_neutro",
+  "Maltodextrina": "suplemento_carbo", "Dextrina de maíz": "suplemento_carbo",
+  "Barrita proteína": "snack_proteico",
+  "Bebida proteica (RTD)": "snack_proteico",
+  "Snack proteico (tipo Grenade)": "snack_proteico",
+  // Procesados dulces
+  "Galletas de avena": "procesado_dulce",
+  // Condimentos
+  "Salsa de soja (baja sal)": "condimento", "Mostaza": "condimento",
+  "Vinagre de manzana": "condimento", "Caldo de pollo (casero)": "condimento",
+};
+
+// Reglas de intercambio: qué familia puede sustituir a qué.
+// Primer elemento = misma familia (preferida). El resto, swaps coherentes.
+const FAMILY_SWAPS = {
+  carne_magra:    ["carne_magra", "pescado_blanco", "pescado_azul", "marisco", "huevo_clara", "huevo_entero", "fiambre_magro"],
+  carne_grasa:    ["carne_grasa", "carne_magra", "pescado_azul"],
+  pescado_blanco: ["pescado_blanco", "pescado_azul", "marisco", "carne_magra", "huevo_clara"],
+  pescado_azul:   ["pescado_azul", "pescado_blanco", "marisco", "carne_magra"],
+  marisco:        ["marisco", "pescado_blanco", "pescado_azul", "carne_magra"],
+  huevo_entero:   ["huevo_entero", "huevo_clara", "carne_magra", "pescado_blanco"],
+  huevo_clara:    ["huevo_clara", "huevo_entero", "carne_magra", "pescado_blanco"],
+  fiambre_magro:  ["fiambre_magro", "carne_magra"],
+  embutido_graso: ["embutido_graso", "fiambre_magro"],
+  proteina_polvo: ["proteina_polvo"],
+  lacteo_proteico:["lacteo_proteico"],
+  queso:          ["queso"],
+  proteina_vegetal:["proteina_vegetal", "lacteo_proteico", "legumbre"],
+
+  grano_neutro:   ["grano_neutro", "grano_integral", "tuberculo", "pseudocereal"],
+  grano_integral: ["grano_integral", "grano_neutro", "tuberculo", "pseudocereal"],
+  pseudocereal:   ["pseudocereal", "grano_integral", "grano_neutro", "tuberculo"],
+  tuberculo:      ["tuberculo", "grano_integral", "grano_neutro", "pseudocereal"],
+  legumbre:       ["legumbre", "tuberculo", "pseudocereal", "grano_integral"],
+  pan_integral:   ["pan_integral", "pan_blanco", "tortita"],
+  pan_blanco:     ["pan_blanco", "pan_integral", "tortita"],
+  tortita:        ["tortita", "pan_integral", "pan_blanco"],
+  snack_salado:   ["snack_salado"],
+
+  fruta:          ["fruta"],
+  verdura:        ["verdura"],
+
+  aceite_saludable:["aceite_saludable", "fruto_seco", "aguacate", "crema_oleaginosa", "semilla"],
+  aceite_saturado: ["aceite_saturado", "aceite_saludable"],
+  aceite_refinado: ["aceite_refinado", "aceite_saludable"],
+  fruto_seco:     ["fruto_seco", "crema_oleaginosa", "aguacate", "semilla", "aceite_saludable"],
+  crema_oleaginosa:["crema_oleaginosa", "fruto_seco", "aguacate", "aceite_saludable"],
+  aguacate:       ["aguacate", "fruto_seco", "crema_oleaginosa", "aceite_saludable"],
+  semilla:        ["semilla", "fruto_seco", "aceite_saludable"],
+  grasa_saturada: ["grasa_saturada"],
+  chocolate:      ["chocolate"],
+
+  endulzante:     ["endulzante"],
+  procesado_dulce:["procesado_dulce"],
+  lacteo_liquido: ["lacteo_liquido", "bebida_vegetal"],
+  bebida_vegetal: ["bebida_vegetal", "lacteo_liquido"],
+
+  suplemento_neutro: ["suplemento_neutro"],
+  suplemento_carbo:  ["suplemento_carbo", "grano_neutro"],
+  snack_proteico:    ["snack_proteico", "lacteo_proteico"],
+  condimento:        ["condimento"],
+};
+
+function getFoodFamily(name)        { return FOOD_FAMILY[name] || null; }
+function getSwappableFamilies(fam)  { return FAMILY_SWAPS[fam] || (fam ? [fam] : []); }
+
+// Devuelve true/false si las dos pertenecen a familias intercambiables.
+// Devuelve null si alguna de las dos no está clasificada (entonces se cae al filtro antiguo).
+function isFamilySwap(baseName, candName) {
+  const baseFam = getFoodFamily(baseName);
+  const candFam = getFoodFamily(candName);
+  if (!baseFam || !candFam) return null;
+  return getSwappableFamilies(baseFam).includes(candFam);
+}
+
 // ─── MOTOR LOCAL DE SUGERENCIAS (cliente) ─────────────────────────────────────
 // Funciona sin servidor. Se usa cuando la llamada a /api falla o no hay servidor.
 
@@ -403,6 +618,19 @@ function localScoreReplacement(baseFood, baseProfile, candidate, candidateProfil
   // Bonus extra para grasas saludables cuando la base también es saludable
   if (baseProfile.group === "grasa" && isHealthyFat(candidate.name))   score += 2.5;
 
+  // Bonus de familia: misma familia es preferible a swap inter-familia
+  const baseFam = getFoodFamily(baseFood.name);
+  const candFam = getFoodFamily(candidate.name);
+  if (baseFam && candFam) {
+    if (baseFam === candFam) {
+      score += 4; // misma familia: pollo↔pavo, merluza↔bacalao, almendras↔nueces
+    } else if (FAMILY_SWAPS[baseFam]?.includes(candFam)) {
+      // Posición en la lista de swappable: cuanto más cerca, mejor encaje
+      const idx = FAMILY_SWAPS[baseFam].indexOf(candFam);
+      score += Math.max(2.5 - idx * 0.4, 0.4);
+    }
+  }
+
   return score;
 }
 
@@ -418,25 +646,21 @@ function localChooseReplacement(baseFood, libraryEntries, usedNames, offset) {
     .filter(({ food, profile }) => {
       // Filtro duro: base saludable no acepta alternativas indulgentes
       if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
-      // Proteínas en polvo: solo whey/caseína o lácteos con >=8g proteína
-      if (baseProfile.isProteinPowder) {
-        return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
-      }
-      // Lácteos: solo lácteos
+
+      // PRIMER FILTRO: familias de alimentos (criterio dietético)
+      const familyMatch = isFamilySwap(baseFood.name, food.name);
+      if (familyMatch === true)  return true;   // intercambio aceptado
+      if (familyMatch === false) return false;  // explícitamente rechazado
+
+      // FALLBACK (alguno no clasificado): lógica antigua por subtipo y grupo
+      if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
       if (baseProfile.isDairy)  return profile.isDairy;
-      // Huevo: huevo o lácteo alto en proteína
       if (baseProfile.isEgg)    return profile.isEgg || (profile.isDairy && food.protein >= 8);
-      // Legumbres: solo legumbres
       if (baseProfile.isLegume) return profile.isLegume;
-      // Fruta: solo fruta
       if (baseProfile.isFruit)  return profile.isFruit;
-      // Verduras: solo verduras
       if (baseProfile.isVegetable) return profile.isVegetable;
-      // Grupo grasa: TODOS los alimentos con grupo grasa (aceite, aguacate, frutos secos)
       if (baseProfile.group === "grasa")          return profile.group === "grasa";
-      // Proteína: grupo proteína (excluyendo lácteos y huevo para evitar mezclas raras)
       if (baseProfile.group === "proteina")       return profile.group === "proteina" && !profile.isDairy && !profile.isEgg;
-      // Hidratos: grupo carbohidrato
       if (baseProfile.group === "carbohidrato")   return profile.group === "carbohidrato";
       return profile.group === baseProfile.group;
     })
@@ -662,8 +886,14 @@ function buildColumnSuggestions(meal) {
       })
       .filter(({ food, profile }) => {
         if (food.name === baseFood.name) return false;
-        // Filtro duro: si la base es saludable, no proponemos opciones indulgentes
         if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
+
+        // PRIMER FILTRO: familias coherentes
+        const familyMatch = isFamilySwap(baseFood.name, food.name);
+        if (familyMatch === true)  return true;
+        if (familyMatch === false) return false;
+
+        // FALLBACK por subtipo y grupo
         if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
         if (baseProfile.isDairy)         return profile.isDairy;
         if (baseProfile.isEgg)           return profile.isEgg || (profile.isDairy && food.protein >= 8);
@@ -1677,6 +1907,126 @@ function parseDietLocally(text) {
   return meals;
 }
 
+function buildAnalysisColumnsForMeal(meal) {
+  return buildColumnSuggestions(meal);
+}
+
+function renderPdfAnalysis(meals) {
+  const panel    = document.getElementById("pdfAnalysisPanel");
+  const totalsEl = document.getElementById("paTotals");
+  const mealsEl  = document.getElementById("paMeals");
+  const subtitle = document.getElementById("paSubtitle");
+  if (!panel || !totalsEl || !mealsEl) return;
+
+  // Totales del día
+  const dayTotals = meals.reduce((acc, m) => {
+    m.foods.forEach((f) => {
+      const factor = (f.grams || 0) / 100;
+      acc.kcal    += (f.kcal    || 0) * factor;
+      acc.protein += (f.protein || 0) * factor;
+      acc.carbs   += (f.carbs   || 0) * factor;
+      acc.fat     += (f.fat     || 0) * factor;
+    });
+    return acc;
+  }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+
+  totalsEl.innerHTML = [
+    ["🔥", "Total día", `${round(dayTotals.kcal)} kcal`, "kcal"],
+    ["💪", "Proteína",  `${round(dayTotals.protein)} g`, "protein"],
+    ["🍚", "Hidratos",  `${round(dayTotals.carbs)} g`,   "carbs"],
+    ["🥑", "Grasas",    `${round(dayTotals.fat)} g`,     "fat"],
+  ].map(([icon, label, value, tone]) => `
+    <div class="pa-total-card ${tone}">
+      <span class="pa-total-label">${icon} ${escapeHtml(label)}</span>
+      <strong class="pa-total-value">${escapeHtml(value)}</strong>
+    </div>
+  `).join("");
+
+  if (subtitle) {
+    subtitle.textContent = `Detectadas ${meals.length} comida(s) y ${meals.reduce((a, m) => a + m.foods.length, 0)} alimentos. Las alternativas saludables se generan en local respetando la regla del crudo.`;
+  }
+
+  mealsEl.innerHTML = meals.map((meal, i) => {
+    const totals = meal.foods.reduce((acc, f) => {
+      const factor = (f.grams || 0) / 100;
+      acc.kcal    += (f.kcal    || 0) * factor;
+      acc.protein += (f.protein || 0) * factor;
+      acc.carbs   += (f.carbs   || 0) * factor;
+      acc.fat     += (f.fat     || 0) * factor;
+      return acc;
+    }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+
+    const colData = buildAnalysisColumnsForMeal(meal);
+    const cols    = colData.columns || [];
+
+    const colsHtml = cols.length ? `
+      <div class="sug-columns pa-meal-cols">
+        ${cols.map(col => `
+          <div class="sug-col" data-group="${escapeHtml(col.group)}">
+            <div class="sug-col-header">
+              <span class="sug-col-label ${escapeHtml(col.color)}">${escapeHtml(col.label)}</span>
+              <span class="sug-col-base">Cambia <strong>${escapeHtml(col.originalFood.name)}</strong> ${round(col.originalFood.grams)}g</span>
+            </div>
+            <div class="sug-items">
+              ${col.alternatives.map(alt => {
+                const tag = isHealthyFat(alt.name) ? '<span class="health-tag good">saludable</span>' : "";
+                return `
+                <div class="sug-item pa-readonly" title="Alternativa similar">
+                  <div class="sug-item-top">
+                    <span class="sug-item-name">${escapeHtml(alt.name)}${tag}</span>
+                    <span class="sug-item-grams">${alt.grams}g</span>
+                  </div>
+                  <div class="sug-item-macros">
+                    <span class="sug-m p">P${alt.protein}</span>
+                    <span class="sug-m c">HC${alt.carbs}</span>
+                    <span class="sug-m f">G${alt.fat}</span>
+                    <span class="sug-m k">${alt.kcal}kcal</span>
+                  </div>
+                </div>`;
+              }).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    ` : `<p class="pa-no-cols">No se detectaron grupos claros para sugerir alternativas en esta comida.</p>`;
+
+    return `
+      <article class="pa-meal-card">
+        <header class="pa-meal-header">
+          <div class="pa-meal-name">
+            <span class="meal-index-badge">${escapeHtml(`Comida ${i + 1}`)}</span>
+            <strong>${escapeHtml(meal.name || `Comida ${i + 1}`)}</strong>
+          </div>
+          <div class="pa-meal-stats">
+            <span class="pa-stat kcal">${round(totals.kcal)} kcal</span>
+            <span class="pa-stat protein">P ${round(totals.protein)}g</span>
+            <span class="pa-stat carbs">HC ${round(totals.carbs)}g</span>
+            <span class="pa-stat fat">G ${round(totals.fat)}g</span>
+          </div>
+        </header>
+        <div class="pa-meal-foods">
+          ${meal.foods.map((f) => `
+            <span class="pa-food-pill">
+              <strong>${escapeHtml(f.name)}</strong>
+              <span>${round(f.grams)}g</span>
+            </span>
+          `).join("")}
+        </div>
+        <p class="pa-meal-cols-intro">Alternativas similares para esta comida:</p>
+        ${colsHtml}
+      </article>`;
+  }).join("");
+
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closePdfAnalysis() {
+  const panel = document.getElementById("pdfAnalysisPanel");
+  if (panel) panel.hidden = true;
+  window._pdfParsedMeals = null;
+}
+
 async function handlePdfUpload(file) {
   const statusEl = document.getElementById("pdfStatus");
   const importEl = document.getElementById("pdfImportBtn");
@@ -1753,16 +2103,17 @@ async function handlePdfUpload(file) {
       return acc;
     }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 
-    // Store for later import
+    // Guardar para importación opcional posterior
     window._pdfParsedMeals = sanitized;
     const totalFoods = sanitized.reduce((a, m) => a + m.foods.length, 0);
     setStatus(
-      `Análisis completado. ${sanitized.length} comida(s), ${totalFoods} alimento(s). ` +
-      `Total estimado: ${round(totals.kcal)} kcal · P${round(totals.protein)}g · HC${round(totals.carbs)}g · G${round(totals.fat)}g. ` +
-      `Al importar se generan alternativas saludables automáticamente.`,
+      `Análisis completado. ${sanitized.length} comida(s), ${totalFoods} alimento(s). Mira el panel de análisis abajo.`,
       "success"
     );
-    if (importEl) importEl.style.display = "inline-flex";
+    // Mostrar panel de análisis (NO se importa todavía)
+    renderPdfAnalysis(sanitized);
+    // Ocultar botón inline antiguo: ahora la importación está en el panel
+    if (importEl) importEl.style.display = "none";
   } catch (err) {
     setStatus(`Error: ${err.message || "No se pudo procesar el PDF."}`, "error");
   }
@@ -1930,33 +2281,42 @@ if (pdfDropZone) {
   });
 }
 
-const pdfImportBtn = document.getElementById("pdfImportBtn");
-if (pdfImportBtn) {
-  pdfImportBtn.addEventListener("click", () => {
+// Botón de importar dentro del panel de análisis
+const paImportBtn = document.getElementById("paImportBtn");
+if (paImportBtn) {
+  paImportBtn.addEventListener("click", () => {
     const meals = window._pdfParsedMeals;
     if (!meals || !meals.length) return;
     state.meals.push(...meals);
 
-    // Auto-generar alternativas en columnas para cada comida importada
+    // Auto-generar alternativas para cada comida importada (mismo flujo)
     meals.forEach((m) => {
       const colData = buildColumnSuggestions(m);
       if (colData.columns && colData.columns.length) {
         state.aiSuggestions[m.id] = {
           generatedAt: new Date().toISOString(),
-          note:        "Alternativas saludables generadas automáticamente al importar.",
+          note:        "Alternativas saludables generadas al importar desde PDF.",
           banner:      { tone: "info", title: "Alternativas listas",
-                         body: "Generadas en local desde el PDF. Filtradas para evitar opciones poco saludables." },
+                         body: "Sugerencias coherentes por familias de alimentos. Filtradas para evitar opciones poco saludables." },
           ...colData,
         };
       }
     });
 
-    window._pdfParsedMeals = null;
-    pdfImportBtn.style.display = "none";
+    closePdfAnalysis();
     const statusEl = document.getElementById("pdfStatus");
     if (statusEl) statusEl.style.display = "none";
     persistAndRender();
-    alert(`${meals.length} comida(s) importada(s) con alternativas saludables. Revisa los gramos en crudo.`);
+    alert(`${meals.length} comida(s) importada(s) con alternativas. Revisa los gramos en crudo.`);
+  });
+}
+
+const paCloseBtn = document.getElementById("paCloseBtn");
+if (paCloseBtn) {
+  paCloseBtn.addEventListener("click", () => {
+    closePdfAnalysis();
+    const statusEl = document.getElementById("pdfStatus");
+    if (statusEl) statusEl.style.display = "none";
   });
 }
 

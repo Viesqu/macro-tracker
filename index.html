@@ -104,6 +104,22 @@
         </section>
       </section>
 
+      <section id="pdfAnalysisPanel" class="panel pdf-analysis" hidden>
+        <header class="pa-header">
+          <div>
+            <p class="eyebrow">Análisis de PDF</p>
+            <h2>Tu dieta detectada</h2>
+            <p class="pa-subtitle" id="paSubtitle">Comidas, macros y alternativas saludables. Aplica swaps directamente o importa el día completo.</p>
+          </div>
+          <div class="pa-totals" id="paTotals"></div>
+        </header>
+        <div class="pa-meals" id="paMeals"></div>
+        <div class="pa-actions">
+          <button id="paImportBtn" class="primary">Añadir estas comidas a mi día</button>
+          <button id="paCloseBtn" class="ghost">Cerrar análisis</button>
+        </div>
+      </section>
+
       <main>
         <div id="mealsContainer" class="meals-grid"></div>
       </main>

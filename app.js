@@ -302,6 +302,38 @@ const foodLibrary = {
 
 const RAW_GUIDANCE = "Regla cerrada: carne, pollo, pescado, huevo, arroz, pasta, legumbres, patata y boniato se apuntan en crudo. Van tal cual los productos listos para consumir: yogur, skyr, queso, pan, aceite, whey, frutos secos, tortillas hechas.";
 
+// ─── CLASIFICACIÓN SALUDABLE ──────────────────────────────────────────────────
+// Criterio: alimentos que no aportan valor en una dieta de calidad o que solo
+// se usan ocasionalmente. Reciben penalización al sugerir alternativas, pero
+// siguen estando en la biblioteca porque alguien puede querer registrarlos.
+
+const INDULGENT_FOODS = new Set([
+  // Embutidos grasos
+  "Chorizo", "Salchichón", "Mortadela",
+  // Grasas saturadas / refinadas
+  "Mantequilla", "Aceite de coco", "Aceite de girasol", "Chocolate negro 85%",
+  // Hidratos refinados / azucarados
+  "Pan blanco", "Tortilla de trigo", "Tortilla de maíz", "Wraps de trigo",
+  "Biscotes", "Nachos / chips de maíz", "Copos de maíz", "Galletas de avena",
+  "Miel", "Maltodextrina", "Dextrina de maíz",
+  // Procesados con azúcar
+  "Barrita proteína", "Bebida proteica (RTD)", "Snack proteico (tipo Grenade)",
+]);
+
+// Grasas saludables prioritarias (AOVE, frutos secos sin sal/azúcar, semillas, aguacate)
+const HEALTHY_FATS = new Set([
+  "Aceite de oliva", "Aguacate",
+  "Almendras", "Nueces", "Anacardos", "Cacahuetes", "Pistachos",
+  "Avellanas", "Macadamia", "Nueces de Brasil",
+  "Crema de cacahuete", "Mantequilla de almendra",
+  "Mantequilla de cacahuete (sin azúcar)", "Tahini (pasta de sésamo)",
+  "Semillas de chía", "Semillas de lino", "Semillas de girasol",
+  "Aceitunas",
+]);
+
+function isIndulgent(name)   { return INDULGENT_FOODS.has(name); }
+function isHealthyFat(name)  { return HEALTHY_FATS.has(name); }
+
 // ─── MOTOR LOCAL DE SUGERENCIAS (cliente) ─────────────────────────────────────
 // Funciona sin servidor. Se usa cuando la llamada a /api falla o no hay servidor.
 
@@ -361,6 +393,16 @@ function localScoreReplacement(baseFood, baseProfile, candidate, candidateProfil
   if (baseProfile.isFruit         === candidateProfile.isFruit)         score += 2;
   if (baseProfile.isProteinPowder === candidateProfile.isProteinPowder) score += 2;
   if (baseProfile.isVegetable     === candidateProfile.isVegetable)     score += 1.5;
+
+  // Criterio nutricional: penaliza indulgentes (mantequilla, chorizo, miel, etc.)
+  // Excepción: si el alimento BASE ya es indulgente, suavizamos la penalización
+  // para que las alternativas saludables suban al top sin cancelar las del mismo tipo.
+  if (isIndulgent(candidate.name) && !isIndulgent(baseFood.name)) score -= 9;
+  if (isIndulgent(candidate.name) &&  isIndulgent(baseFood.name)) score -= 2;
+
+  // Bonus extra para grasas saludables cuando la base también es saludable
+  if (baseProfile.group === "grasa" && isHealthyFat(candidate.name))   score += 2.5;
+
   return score;
 }
 
@@ -374,6 +416,8 @@ function localChooseReplacement(baseFood, libraryEntries, usedNames, offset) {
       return { food, profile, score: localScoreReplacement(baseFood, baseProfile, food, profile) };
     })
     .filter(({ food, profile }) => {
+      // Filtro duro: base saludable no acepta alternativas indulgentes
+      if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
       // Proteínas en polvo: solo whey/caseína o lácteos con >=8g proteína
       if (baseProfile.isProteinPowder) {
         return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
@@ -423,14 +467,41 @@ function localScaleGrams(baseFood, replacement) {
   const byCarbs   = rCarbs    > 0 ? (bCarbs   / rCarbs)   * 100 : byKcal;
   const byFat     = rFat      > 0 ? (bFat     / rFat)     * 100 : byKcal;
 
-  const profile = localGetFoodProfile(baseFood);
-  let grams = byKcal;
-  if (profile.group === "proteina")      grams = byProtein * 0.65 + byKcal * 0.35;
-  else if (profile.group === "carbohidrato") grams = byCarbs * 0.70 + byKcal * 0.30;
-  else if (profile.group === "grasa")        grams = byFat   * 0.70 + byKcal * 0.30;
+  const profile        = localGetFoodProfile(baseFood);
+  const replName       = String(replacement.name || "");
+  const isOilBase      = /aceite/i.test(String(baseFood.name || ""));
+  const isOilReplace   = /aceite/i.test(replName);
 
-  const minGrams = /aceite/i.test(String(replacement.name || "")) ? 5 : 20;
-  return Math.max(minGrams, Math.min(500, round(grams)));
+  let grams = byKcal;
+  if (profile.group === "proteina")           grams = byProtein * 0.65 + byKcal * 0.35;
+  else if (profile.group === "carbohidrato")  grams = byCarbs   * 0.70 + byKcal * 0.30;
+  else if (profile.group === "grasa") {
+    // Para grasas: prioriza kcal sobre fat puro porque evita propuestas absurdas
+    // (ej: 10g AOVE = 90 kcal → 15g almendras (87 kcal) en vez de 20g por solo igualar fat)
+    if (isOilBase && !isOilReplace) {
+      // Cambio aceite → fruto seco/aguacate: kcal manda, fat secundario
+      grams = byKcal * 0.80 + byFat * 0.20;
+    } else if (!isOilBase && isOilReplace) {
+      // Cambio fruto seco → aceite: kcal manda fuerte (el aceite es muy denso)
+      grams = byKcal * 0.85 + byFat * 0.15;
+    } else {
+      // Mismo tipo de grasa: equilibrado
+      grams = byKcal * 0.55 + byFat * 0.45;
+    }
+  }
+
+  // Mínimos/máximos sensatos por tipo de alimento
+  let minGrams = 20;
+  let maxGrams = 500;
+  if (isOilReplace)                                              { minGrams = 3;  maxGrams = 40;  }
+  else if (/almendra|nuez|nueces|anacardo|cacahuete|pistacho|avellana|macadamia|brasil|crema de|mantequilla de|tahini|semilla/i.test(replName)) {
+    minGrams = 5;   maxGrams = 80;
+  }
+  else if (/aguacate|aceitunas/i.test(replName))                  { minGrams = 15; maxGrams = 250; }
+  else if (/whey|caseín|prote[íi]na/i.test(replName))             { minGrams = 10; maxGrams = 80;  }
+  else if (/creatina|maltodextrina|dextrina/i.test(replName))     { minGrams = 3;  maxGrams = 40;  }
+
+  return Math.max(minGrams, Math.min(maxGrams, round(grams)));
 }
 
 function localBuildVariant(meal, foods, libraryEntries, variant) {
@@ -591,6 +662,8 @@ function buildColumnSuggestions(meal) {
       })
       .filter(({ food, profile }) => {
         if (food.name === baseFood.name) return false;
+        // Filtro duro: si la base es saludable, no proponemos opciones indulgentes
+        if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
         if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
         if (baseProfile.isDairy)         return profile.isDairy;
         if (baseProfile.isEgg)           return profile.isEgg || (profile.isDairy && food.protein >= 8);
@@ -976,17 +1049,21 @@ function setupFoodAutocomplete(input, food, meal, refs) {
     dropdown = document.createElement("div");
     dropdown.className = "food-dropdown";
     dropdown.setAttribute("role", "listbox");
-    dropdown.innerHTML = matches.map(([name, m], i) => `
+    dropdown.innerHTML = matches.map(([name, m], i) => {
+      const tag = isHealthyFat(name) ? '<span class="health-tag good">saludable</span>'
+                : isIndulgent(name)  ? '<span class="health-tag soft">ocasional</span>'
+                : "";
+      return `
       <div class="food-dd-item" role="option" data-name="${escapeHtml(name)}" data-idx="${i}">
-        <span class="fdi-name">${markMatch(name, input.value)}</span>
+        <span class="fdi-name">${markMatch(name, input.value)}${tag}</span>
         <span class="fdi-chips">
           <span class="sug-m p">P${m.protein}</span>
           <span class="sug-m c">HC${m.carbs}</span>
           <span class="sug-m f">G${m.fat}</span>
           <span class="sug-m k">${m.kcal}kcal</span>
         </span>
-      </div>
-    `).join("");
+      </div>`;
+    }).join("");
 
     dropdown.addEventListener("mousedown", (e) => {
       const item = e.target.closest(".food-dd-item");
@@ -1352,7 +1429,9 @@ function renderMealSuggestionsColumns(entry, aiResults) {
             </span>
           </div>
           <div class="sug-items">
-            ${col.alternatives.map(alt => `
+            ${col.alternatives.map(alt => {
+              const tag = isHealthyFat(alt.name) ? '<span class="health-tag good">saludable</span>' : "";
+              return `
               <button class="sug-item"
                 data-food-id="${escapeHtml(col.originalFoodId)}"
                 data-alt-name="${escapeHtml(alt.name)}"
@@ -1363,7 +1442,7 @@ function renderMealSuggestionsColumns(entry, aiResults) {
                 data-alt-kcal="${alt.per100.kcal}"
                 title="Aplicar: sustituye ${escapeHtml(col.originalFood.name)} por ${escapeHtml(alt.name)}">
                 <div class="sug-item-top">
-                  <span class="sug-item-name">${escapeHtml(alt.name)}</span>
+                  <span class="sug-item-name">${escapeHtml(alt.name)}${tag}</span>
                   <span class="sug-item-grams">${alt.grams}g</span>
                 </div>
                 <div class="sug-item-macros">
@@ -1372,8 +1451,8 @@ function renderMealSuggestionsColumns(entry, aiResults) {
                   <span class="sug-m f">G${alt.fat}</span>
                   <span class="sug-m k">${alt.kcal}kcal</span>
                 </div>
-              </button>
-            `).join("")}
+              </button>`;
+            }).join("")}
           </div>
         </div>
       `).join("")}
@@ -1662,10 +1741,25 @@ async function handlePdfUpload(file) {
       return;
     }
 
+    // Compute totals for analysis preview
+    const totals = sanitized.reduce((acc, m) => {
+      m.foods.forEach((f) => {
+        const factor = (f.grams || 0) / 100;
+        acc.kcal    += (f.kcal    || 0) * factor;
+        acc.protein += (f.protein || 0) * factor;
+        acc.carbs   += (f.carbs   || 0) * factor;
+        acc.fat     += (f.fat     || 0) * factor;
+      });
+      return acc;
+    }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+
     // Store for later import
     window._pdfParsedMeals = sanitized;
+    const totalFoods = sanitized.reduce((a, m) => a + m.foods.length, 0);
     setStatus(
-      `${sanitized.length} comida(s) detectadas, ${sanitized.reduce((a, m) => a + m.foods.length, 0)} alimentos. Pulsa "Importar" para añadirlas.`,
+      `Análisis completado. ${sanitized.length} comida(s), ${totalFoods} alimento(s). ` +
+      `Total estimado: ${round(totals.kcal)} kcal · P${round(totals.protein)}g · HC${round(totals.carbs)}g · G${round(totals.fat)}g. ` +
+      `Al importar se generan alternativas saludables automáticamente.`,
       "success"
     );
     if (importEl) importEl.style.display = "inline-flex";
@@ -1842,12 +1936,27 @@ if (pdfImportBtn) {
     const meals = window._pdfParsedMeals;
     if (!meals || !meals.length) return;
     state.meals.push(...meals);
+
+    // Auto-generar alternativas en columnas para cada comida importada
+    meals.forEach((m) => {
+      const colData = buildColumnSuggestions(m);
+      if (colData.columns && colData.columns.length) {
+        state.aiSuggestions[m.id] = {
+          generatedAt: new Date().toISOString(),
+          note:        "Alternativas saludables generadas automáticamente al importar.",
+          banner:      { tone: "info", title: "Alternativas listas",
+                         body: "Generadas en local desde el PDF. Filtradas para evitar opciones poco saludables." },
+          ...colData,
+        };
+      }
+    });
+
     window._pdfParsedMeals = null;
     pdfImportBtn.style.display = "none";
     const statusEl = document.getElementById("pdfStatus");
     if (statusEl) statusEl.style.display = "none";
     persistAndRender();
-    alert(`${meals.length} comida(s) importada(s). Revisa y edita los valores en crudo.`);
+    alert(`${meals.length} comida(s) importada(s) con alternativas saludables. Revisa los gramos en crudo.`);
   });
 }
 

@@ -697,6 +697,26 @@ input:focus, select:focus {
   line-height: 1.5;
 }
 
+.health-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+.health-tag.good {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.health-tag.soft {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
 /* ── FOOD AUTOCOMPLETE DROPDOWN ─────────────────────────────────────────────── */
 .food-dropdown {
   position: absolute;

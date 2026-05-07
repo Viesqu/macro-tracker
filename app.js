@@ -298,6 +298,22 @@ const foodLibrary = {
   "Mostaza":                  { protein: 4,    carbs: 3,    fat: 4,    kcal: 66  },
   "Vinagre de manzana":       { protein: 0,    carbs: 1,    fat: 0,    kcal: 22  },
   "Caldo de pollo (casero)":  { protein: 3,    carbs: 0.5,  fat: 0.5,  kcal: 20  },
+
+  // ── ALIMENTOS COMUNES EN DIETAS REALES (España) ─────────────────────────
+  "Yogur proteico (alto en proteína)": { protein: 10,  carbs: 5,    fat: 0,    kcal: 60  },
+  "Salmón ahumado":           { protein: 22,   carbs: 0,    fat: 4,    kcal: 132 },
+  "Trucha ahumada":           { protein: 24,   carbs: 0,    fat: 5,    kcal: 145 },
+  "Anchoas en aceite (lata)": { protein: 29,   carbs: 0,    fat: 10,   kcal: 210 },
+  "Caballa en conserva":      { protein: 22,   carbs: 0,    fat: 11,   kcal: 191 },
+  "Sardinillas en aceite":    { protein: 24,   carbs: 0,    fat: 16,   kcal: 235 },
+  "Mejillones en escabeche":  { protein: 18,   carbs: 5,    fat: 8,    kcal: 165 },
+  "Pollo a la plancha (sin piel)": { protein: 22.5, carbs: 0, fat: 2.6, kcal: 120 },
+  "Cuscús integral":          { protein: 13,   carbs: 70,   fat: 1,    kcal: 358 },
+  "Arroz integral cocción rápida": { protein: 7.5, carbs: 76, fat: 2.2, kcal: 360 },
+  "Crema de avena (instantánea)": { protein: 13, carbs: 64,  fat: 7,    kcal: 380 },
+  "Galletas de arroz inflado": { protein: 8,   carbs: 81,   fat: 2.8,  kcal: 387 },
+  "Pan de molde proteico":    { protein: 25,   carbs: 24,   fat: 4,    kcal: 245 },
+  "Tortitas de avena (caseras)": { protein: 14, carbs: 60,  fat: 7,    kcal: 360 },
 };
 
 const RAW_GUIDANCE = "Regla cerrada: carne, pollo, pescado, huevo, arroz, pasta, legumbres, patata y boniato se apuntan en crudo. Van tal cual los productos listos para consumir: yogur, skyr, queso, pan, aceite, whey, frutos secos, tortillas hechas.";
@@ -484,6 +500,21 @@ const FOOD_FAMILY = {
   // Condimentos
   "Salsa de soja (baja sal)": "condimento", "Mostaza": "condimento",
   "Vinagre de manzana": "condimento", "Caldo de pollo (casero)": "condimento",
+  // Alimentos nuevos
+  "Yogur proteico (alto en proteína)": "lacteo_proteico",
+  "Salmón ahumado":           "pescado_azul",
+  "Trucha ahumada":           "pescado_azul",
+  "Anchoas en aceite (lata)": "pescado_azul",
+  "Caballa en conserva":      "pescado_azul",
+  "Sardinillas en aceite":    "pescado_azul",
+  "Mejillones en escabeche":  "marisco",
+  "Pollo a la plancha (sin piel)": "carne_magra",
+  "Cuscús integral":          "grano_integral",
+  "Arroz integral cocción rápida": "grano_integral",
+  "Crema de avena (instantánea)":  "grano_integral",
+  "Galletas de arroz inflado": "tortita",
+  "Pan de molde proteico":    "pan_integral",
+  "Tortitas de avena (caseras)":   "grano_integral",
 };
 
 // Reglas de intercambio: qué familia puede sustituir a qué.
@@ -495,7 +526,7 @@ const FAMILY_SWAPS = {
   pescado_azul:   ["pescado_azul", "pescado_blanco", "marisco", "carne_magra"],
   marisco:        ["marisco", "pescado_blanco", "pescado_azul", "carne_magra"],
   huevo_entero:   ["huevo_entero", "huevo_clara", "carne_magra", "pescado_blanco"],
-  huevo_clara:    ["huevo_clara", "huevo_entero", "carne_magra", "pescado_blanco"],
+  huevo_clara:    ["huevo_clara", "huevo_entero", "carne_magra", "pescado_blanco", "pescado_azul", "marisco"],
   fiambre_magro:  ["fiambre_magro", "carne_magra"],
   embutido_graso: ["embutido_graso", "fiambre_magro"],
   proteina_polvo: ["proteina_polvo"],
@@ -547,6 +578,51 @@ function isFamilySwap(baseName, candName) {
   const candFam = getFoodFamily(candName);
   if (!baseFam || !candFam) return null;
   return getSwappableFamilies(baseFam).includes(candFam);
+}
+
+// ─── SIMILITUD POR PERFIL NUTRICIONAL ─────────────────────────────────────────
+// Filtro adicional: dos alimentos pueden ser de familias compatibles pero tener
+// perfiles muy distintos (claras vs huevo entero: ambos huevos pero 0.2g vs 10.6g grasa).
+// Este filtro asegura que la alternativa mantiene el "carácter" del alimento original.
+
+function profileMetrics(food) {
+  const kcal = Math.max(food.kcal || 0, 1);
+  return {
+    fat: Number(food.fat || 0),
+    pr:  (Number(food.protein || 0) * 4) / kcal,
+    fr:  (Number(food.fat     || 0) * 9) / kcal,
+    cr:  (Number(food.carbs   || 0) * 4) / kcal,
+  };
+}
+
+// Devuelve true si el candidato es similar nutricionalmente a la base, falso si rompe el perfil.
+function isProfileSimilar(baseFood, candidate, group) {
+  const b = profileMetrics(baseFood);
+  const c = profileMetrics(candidate);
+
+  if (group === "proteina") {
+    // Si la base es muy magra (<15% kcal de grasa) → candidato no puede ser >35% kcal grasa
+    // Esto bloquea claras → huevo entero, claras → quesos grasos, claras → carnes grasas
+    if (b.fr < 0.15 && c.fr > 0.35) return false;
+    // Si la base tiene proteína dominante (>55% kcal) → candidato debe mantener al menos 30% PR
+    if (b.pr > 0.55 && c.pr < 0.30) return false;
+    // Saltos absolutos de grasa: base <5g/100g → candidato max 12g; base <12g → candidato max 25g
+    if (b.fat <  5 && c.fat > 12) return false;
+    if (b.fat < 12 && c.fat > 25) return false;
+  }
+  else if (group === "carbohidrato") {
+    // El candidato debe ser carb-dominante: ni proteína ni grasa pueden ser >45% kcal
+    if (c.pr > 0.45 || c.fr > 0.45) return false;
+    // Si la base tiene poca grasa (<5g) → candidato max 15g
+    if (b.fat < 5 && c.fat > 15) return false;
+  }
+  else if (group === "grasa") {
+    // El candidato debe tener grasa significativa y ser fat-dominante (filtra alimentos no-grasos)
+    if (c.fat < 12) return false;
+    if (c.fr  < 0.40) return false;
+  }
+
+  return true;
 }
 
 // ─── MOTOR LOCAL DE SUGERENCIAS (cliente) ─────────────────────────────────────
@@ -644,15 +720,20 @@ function localChooseReplacement(baseFood, libraryEntries, usedNames, offset) {
       return { food, profile, score: localScoreReplacement(baseFood, baseProfile, food, profile) };
     })
     .filter(({ food, profile }) => {
-      // Filtro duro: base saludable no acepta alternativas indulgentes
+      // 1. Filtro saludable: base saludable no acepta alternativas indulgentes
       if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
 
-      // PRIMER FILTRO: familias de alimentos (criterio dietético)
+      // 2. Filtro de familia: rechaza familias incompatibles dietéticamente
       const familyMatch = isFamilySwap(baseFood.name, food.name);
-      if (familyMatch === true)  return true;   // intercambio aceptado
-      if (familyMatch === false) return false;  // explícitamente rechazado
+      if (familyMatch === false) return false;
 
-      // FALLBACK (alguno no clasificado): lógica antigua por subtipo y grupo
+      // 3. Filtro de PERFIL nutricional: rechaza similitudes engañosas
+      // (ej. claras y huevo entero son ambos "huevo" pero su perfil de grasa difiere 50x)
+      if (!isProfileSimilar(baseFood, food, baseProfile.group)) return false;
+
+      if (familyMatch === true) return true;
+
+      // FALLBACK por subtipo y grupo cuando faltan datos de familia
       if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
       if (baseProfile.isDairy)  return profile.isDairy;
       if (baseProfile.isEgg)    return profile.isEgg || (profile.isDairy && food.protein >= 8);
@@ -888,12 +969,15 @@ function buildColumnSuggestions(meal) {
         if (food.name === baseFood.name) return false;
         if (!isIndulgent(baseFood.name) && isIndulgent(food.name)) return false;
 
-        // PRIMER FILTRO: familias coherentes
         const familyMatch = isFamilySwap(baseFood.name, food.name);
-        if (familyMatch === true)  return true;
         if (familyMatch === false) return false;
 
-        // FALLBACK por subtipo y grupo
+        // Filtro de perfil nutricional: bloquea swaps que rompen el "carácter" del alimento
+        if (!isProfileSimilar(baseFood, food, group)) return false;
+
+        if (familyMatch === true) return true;
+
+        // Fallback por subtipo y grupo
         if (baseProfile.isProteinPowder) return profile.isProteinPowder || (profile.isDairy && food.protein >= 8);
         if (baseProfile.isDairy)         return profile.isDairy;
         if (baseProfile.isEgg)           return profile.isEgg || (profile.isDairy && food.protein >= 8);
